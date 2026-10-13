@@ -1,0 +1,13 @@
+# Testar Barramento — V.tal
+
+Site estático (`index.html`) publicado na Vercel a cada push na `main`. Banco de dados: Supabase.
+
+## Banco de dados (uma vez)
+1. Supabase → SQL Editor → New query → cole `supabase/schema.sql` → Run.
+2. Supabase → Project Settings → API → copie a **Project URL** e a chave **anon / publishable** (nunca a `service_role`).
+3. No `index.html`, troque `%%SUPABASE_URL%%` e `%%SUPABASE_KEY%%` por esses valores, commit e push.
+
+## Funções
+- **Registrar teste:** ao final de cada teste o app pergunta se deseja registrar. Fica salvo com data/hora, visível para todos no histórico do trecho e no botão HISTÓRICO, com comparação "melhor / pior" contra o registro anterior.
+- **Novos barramentos (ADICIONAR):** a planilha enviada é gravada no banco e aparece para todos os usuários.
+- Acesso aberto, sem login. O histórico de testes não pode ser editado nem apagado pelo app.
