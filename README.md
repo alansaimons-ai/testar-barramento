@@ -5,7 +5,7 @@ Site estático (`index.html`) publicado na Vercel a cada push na `main`. Banco d
 ## Banco de dados (uma vez)
 1. Supabase → SQL Editor → New query → cole `supabase/schema.sql` → Run.
 2. Supabase → Project Settings → API → copie a **Project URL** e a chave **anon / publishable** (nunca a `service_role`).
-3. No `index.html`, troque `%%SUPABASE_URL%%` e `%%SUPABASE_KEY%%` por esses valores, commit e push.
+3. No `index.html`, já preenchido com o projeto `edrnecnhjmbictlacoav` (mesmo do Painel de Indicadores).
 
 ## Funções
 - **Registrar teste:** ao final de cada teste o app pergunta se deseja registrar. Fica salvo com data/hora, visível para todos no histórico do trecho e no botão HISTÓRICO, com comparação "melhor / pior" contra o registro anterior.
