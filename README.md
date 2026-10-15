@@ -14,3 +14,10 @@ Site estático (`index.html`) publicado na Vercel a cada push na `main`. Banco d
 
 ## Curvas anexadas aos testes
 Na base histórica cada teste registrado tem o botão **Anexar curva** (aceita vários arquivos, até 25 MB cada). Testes com arquivo ganham a flag **CURVAS** e o botão **Baixar**. Requer rodar o bloco 4 do `supabase/schema.sql` (tabela `tb_curvas` + bucket `curvas`).
+
+## Analisador de curvas (.SOR)
+Módulo `src/sor-analisador.js` (embutido no `index.html` entre `/*TBSOR-BEGIN*/` e `/*TBSOR-END*/`). Lê SOR Telcordia SR-4731 v1 e v2 no navegador, sem enviar nada a servidor.
+- **Compilado:** anexe um `.zip` (vários arquivos) ou 2 `.sor` (LR/RL) ao teste registrado.
+- **Extrair:** `📦 Extrair` lista o conteúdo do ZIP (baixar cada arquivo / analisar); `⬇ Baixar tudo (.zip)` junta todos os anexos.
+- **Analisar:** `📈 Analisar curvas` abre curva com zoom/cursores A-B, tabela de eventos, análise automática por regras (limites no topo do arquivo, `LIM`), média bidirecional LR/RL e comparação com testes anteriores do mesmo trecho.
+- Para regenerar o `index.html` após editar o módulo, substitua o trecho entre os marcadores.
