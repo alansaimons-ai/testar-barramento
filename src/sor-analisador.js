@@ -404,79 +404,131 @@
     function cmpCard() {
       var D = cmpData(), A = cur().A, na = cur().name, nb = S.cmpName, CA = "#0ea5e9", CB = "#a78bfa";
       function side(c, col) { return c ? "<td style='border-left:2px solid " + col + "'>" + c.tipo + " " + c.n + "</td><td>" + c.pos.toFixed(3) + "</td><td>" + f2c(c.perda, 2) + "</td><td>" + f2c(c.refl, 1) + "</td><td>" + f2c(c.att, 3) + "</td>" : "<td colspan='5' style='border-left:2px solid " + col + ";color:var(--mt);text-align:center'>— não encontrado nesta curva —</td>"; }
-      var h = '<div class="sv-card"><div class="sv-lb">Tabela de eventos — lado a lado</div><div class="sv-tbw"><table class="sv-tb"><thead><tr><th style="border-bottom:3px solid ' + CA + ';color:' + CA + '" colspan="5">ATUAL · ' + esc(na) + '</th><th style="border-bottom:3px solid ' + CB + ';color:' + CB + ';border-left:2px solid ' + CB + '" colspan="5">COMPARADA · ' + esc(nb) + '</th><th colspan="2" style="border-left:2px solid var(--bd)">DIFERENÇA</th></tr>' +
+      var h = '<div class="sv-card"><div class="sv-lb">Tabela de eventos — lado a lado</div><div class="sv-tbw"><table class="sv-tb"><thead><tr><th style="border-bottom:3px solid ' + CA + ';color:' + CA + '" colspan="5">' + lbl1() + ' · ' + esc(na) + '</th><th style="border-bottom:3px solid ' + CB + ';color:' + CB + ';border-left:2px solid ' + CB + '" colspan="5">' + lbl2() + ' · ' + esc(nb) + '</th><th colspan="2" style="border-left:2px solid var(--bd)">DIFERENÇA</th></tr>' +
         '<tr><th style="border-left:2px solid ' + CA + '">Evento</th><th>Pos. (km)</th><th>Perda (dB)</th><th>Refl. (dB)</th><th>Atenuação (dB/km)</th><th style="border-left:2px solid ' + CB + '">Evento</th><th>Pos. (km)</th><th>Perda (dB)</th><th>Refl. (dB)</th><th>Atenuação (dB/km)</th><th style="border-left:2px solid var(--bd)">Δ perda (dB)</th><th>Δ pos. (m)</th></tr></thead><tbody>' +
         D.rows.map(function (r) {
           var big = r.dp != null && Math.abs(r.dp) >= 0.15, c = big ? "#ca8a04" : "var(--tx)";
           return "<tr" + (r.ai >= 0 ? ' class="ev" data-ev="' + r.ai + '"' : "") + ">" + side(r.a, CA) + side(r.b, CB) + "<td style='border-left:2px solid var(--bd);font-weight:700;color:" + c + "'>" + sg2(r.dp, 2) + "</td><td>" + sg2(r.dx, 0) + "</td></tr>";
         }).join("") + "</tbody></table></div>" +
-        '<div class="sv-note">Δ = atual − comparada. Eventos pareados pela posição (tolerância ' + (D.tol * 1000).toFixed(0) + ' m). Diferenças de perda ≥ 0,15 dB ficam em amarelo.</div>' +
-        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="sv-btn on" id="sv-shc">📤 Compartilhar tabela</button><button class="sv-btn" id="sv-pngc">⬇ PNG</button><button class="sv-btn" id="sv-csvc">⬇ CSV lado a lado</button><button class="sv-btn" id="sv-csve">⬇ Eventos CSV (atual)</button></div><div class="sv-note" id="sv-shm"></div></div>';
+        '<div class="sv-note">Δ = ' + lbl1().toLowerCase() + ' − ' + lbl2().toLowerCase() + '. Eventos pareados pela posição (tolerância ' + (D.tol * 1000).toFixed(0) + ' m). Diferenças de perda ≥ 0,15 dB ficam em amarelo.</div>' +
+        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="sv-btn on" id="sv-shc">📤 Compartilhar (slides 16:9)</button><button class="sv-btn" id="sv-pptc">⬇ PowerPoint (.pptx)</button><button class="sv-btn" id="sv-pngc">⬇ PNG 16:9</button><button class="sv-btn" id="sv-csvc">⬇ CSV lado a lado</button><button class="sv-btn" id="sv-csve">⬇ Eventos CSV (atual)</button></div><div class="sv-note" id="sv-shm"></div></div>';
       return h;
     }
-    function cmpCanvas() {
-      var D = cmpData(), A = cur().A, Bm = S.cmpA, na = cur().name, nb = S.cmpName, W = 1500, M = 28, RH = 30, HH = 34;
-      var rowsN = D.rows.length, H = M + 34 + 22 + 60 + HH * 2 + rowsN * RH + 54, dpr = 2;
-      var cv = document.createElement("canvas"); cv.width = W * dpr; cv.height = H * dpr; var x = cv.getContext("2d"); x.scale(dpr, dpr);
-      var CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6";
-      x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
-      x.textBaseline = "middle"; x.fillStyle = TX; x.font = "800 22px Inter,system-ui,sans-serif"; x.textAlign = "left";
-      x.fillText("Comparação de curvas OTDR — eventos lado a lado", M, M + 8);
-      x.font = "500 13px Inter,system-ui,sans-serif"; x.fillStyle = MT; x.fillText((cfg.title || "") + "  ·  gerado em " + new Date().toLocaleString("pt-BR"), M, M + 34);
-      var P = cur().P, C = S.cmpP, y0 = M + 62;
-      function card(xx, w, col, nm, PP, AA) {
-        x.fillStyle = col + "14"; x.fillRect(xx, y0, w, 54); x.fillStyle = col; x.fillRect(xx, y0, 4, 54);
-        x.textAlign = "left"; x.font = "800 14px Inter,system-ui,sans-serif"; x.fillText(nm, xx + 14, y0 + 16);
-        x.font = "500 12px Inter,system-ui,sans-serif"; x.fillStyle = TX;
-        var m = AA.metricas; x.fillText((PP.fxd.comprimentoOnda || "") + " nm · pulso " + PP.fxd.pulso + " ns · " + m.comprimento.toFixed(3) + " km · perda total " + f2c(m.perdaTotal, 2) + " dB · " + (m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—"), xx + 14, y0 + 38);
+    function lbl1() { return S.cmpSel && String(S.cmpSel).indexOf("i:") === 0 ? "FIBRA " + (S.i + 1) : "ATUAL"; }
+    function lbl2() { return S.cmpSel && String(S.cmpSel).indexOf("i:") === 0 ? "FIBRA " + (+String(S.cmpSel).slice(2) + 1) : "COMPARADA"; }
+    /* slides 16:9 (1920x1080 = formato padrão do PowerPoint "Widescreen") */
+    function slidesCmp() {
+      var W = 1920, H = 1080, M = 40, CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6", FN = "Inter,system-ui,sans-serif";
+      var D = cmpData(), P = cur().P, A = cur().A, C = S.cmpP, B = S.cmpA, na = cur().name, nb = S.cmpName, l1 = lbl1(), l2 = lbl2();
+      var perPage = 17, pages = Math.max(1, Math.ceil(D.rows.length / perPage)), total = 1 + pages, out = [];
+      var when = new Date().toLocaleString("pt-BR");
+      function mk() { var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var x = cv.getContext("2d"); x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H); x.textBaseline = "middle"; return { cv: cv, x: x }; }
+      function fit(x, t, w) { t = String(t == null ? "" : t); if (x.measureText(t).width <= w) return t; while (t.length > 1 && x.measureText(t + "…").width > w) t = t.slice(0, -1); return t + "…"; }
+      function head(x, idx, suf) {
+        x.fillStyle = "#0f172a"; x.fillRect(0, 0, W, 84); x.textAlign = "left"; x.fillStyle = "#ffffff"; x.font = "800 30px " + FN; x.fillText("Comparação de curvas OTDR" + (suf || ""), M, 33);
+        x.font = "500 16px " + FN; x.fillStyle = "#cbd5e1"; x.fillText(fit(x, (cfg.title || "") + "  ·  " + when, 1300), M, 62);
+        x.textAlign = "right"; x.font = "700 16px " + FN; x.fillText("TESTAR BARRAMENTO · V.tal     " + idx + "/" + total, W - M, 42);
       }
-      var cw = (W - 2 * M - 16) / 2; card(M, cw, CA, "ATUAL · " + na, P, A); card(M + cw + 16, cw, CB, "COMPARADA · " + nb, C, Bm);
-      var ty = y0 + 54 + 14;
-      var cols = [60, 80, 80, 80, 100, 60, 80, 80, 80, 100, 100, 80], tw = cols.reduce(function (a, b) { return a + b; }, 0), sc = (W - 2 * M) / tw; cols = cols.map(function (c) { return c * sc; });
-      var xs = [M]; cols.forEach(function (c, i) { xs.push(xs[i] + c); });
-      x.fillStyle = CA + "22"; x.fillRect(xs[0], ty, xs[5] - xs[0], HH); x.fillStyle = CB + "22"; x.fillRect(xs[5], ty, xs[10] - xs[5], HH); x.fillStyle = "#e9eef3"; x.fillRect(xs[10], ty, xs[12] - xs[10], HH);
-      x.font = "800 12px Inter,system-ui,sans-serif"; x.textAlign = "center";
-      x.fillStyle = CA; x.fillText("ATUAL", (xs[0] + xs[5]) / 2, ty + HH / 2); x.fillStyle = CB; x.fillText("COMPARADA", (xs[5] + xs[10]) / 2, ty + HH / 2); x.fillStyle = TX; x.fillText("DIFERENÇA (atual − comp.)", (xs[10] + xs[12]) / 2, ty + HH / 2);
-      var hd = ["Evento", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Evento", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Δ perda (dB)", "Δ pos. (m)"];
-      var ty2 = ty + HH; x.font = "700 11px Inter,system-ui,sans-serif"; x.fillStyle = MT;
-      hd.forEach(function (t, i) { x.textAlign = "center"; x.fillText(t, (xs[i] + xs[i + 1]) / 2, ty2 + HH / 2); });
-      x.strokeStyle = BD; x.lineWidth = 1; x.beginPath(); x.moveTo(M, ty2 + HH); x.lineTo(W - M, ty2 + HH); x.stroke();
-      D.rows.forEach(function (r, k) {
-        var yy = ty2 + HH + k * RH, mid = yy + RH / 2;
-        if (k % 2) { x.fillStyle = "#f6f8fa"; x.fillRect(M, yy, W - 2 * M, RH); }
-        function side(c, o) {
-          x.textAlign = "center"; x.fillStyle = TX; x.font = "500 12px Inter,system-ui,sans-serif";
-          if (!c) { x.fillStyle = MT; x.fillText("— não encontrado nesta curva —", (xs[o] + xs[o + 5]) / 2, mid); return; }
-          var v = [c.tipo + " " + c.n, c.pos.toFixed(3), f2c(c.perda, 2), f2c(c.refl, 1), f2c(c.att, 3)];
-          v.forEach(function (t, i) { x.fillText(t, (xs[o + i] + xs[o + i + 1]) / 2, mid); });
-        }
-        side(r.a, 0); side(r.b, 5);
-        var big = r.dp != null && Math.abs(r.dp) >= 0.15; x.font = "800 12px Inter,system-ui,sans-serif"; x.fillStyle = big ? "#b45309" : TX; x.textAlign = "center"; x.fillText(sg2(r.dp, 2), (xs[10] + xs[11]) / 2, mid);
-        x.font = "500 12px Inter,system-ui,sans-serif"; x.fillStyle = TX; x.fillText(sg2(r.dx, 0), (xs[11] + xs[12]) / 2, mid);
-      });
-      [0, 5, 10].forEach(function (i) { x.strokeStyle = i === 0 ? CA : i === 5 ? CB : BD; x.lineWidth = 2; x.beginPath(); x.moveTo(xs[i], ty); x.lineTo(xs[i], ty2 + HH + rowsN * RH); x.stroke(); });
-      x.strokeStyle = BD; x.lineWidth = 1; x.beginPath(); x.moveTo(M, ty2 + HH + rowsN * RH); x.lineTo(W - M, ty2 + HH + rowsN * RH); x.stroke();
-      x.textAlign = "left"; x.fillStyle = MT; x.font = "500 11px Inter,system-ui,sans-serif";
-      x.fillText("Eventos pareados pela posição (tolerância " + (D.tol * 1000).toFixed(0) + " m). Diferenças de perda ≥ 0,15 dB em destaque. Análise de apoio — a interpretação final é do analista.", M, ty2 + HH + rowsN * RH + 22);
-      return cv;
+      function kp(PP, AA) { var m = AA.metricas; return [["Comprimento", m.comprimento.toFixed(3) + " km"], ["Perda total", m.perdaTotal != null ? m.perdaTotal.toFixed(2) + " dB" : "—"], ["Atenuação média", m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—"], ["ORL", m.orl ? m.orl.toFixed(1) + " dB" : "—"], ["Eventos", String(m.nEventos)], ["Pior perda", m.pior ? m.pior.perda.toFixed(2) + " dB @ " + m.pior.dist.toFixed(2) + " km" : "—"], ["Pior reflectância", m.piorRefl ? m.piorRefl.refl.toFixed(1) + " dB" : "—"], ["Faixa dinâmica", m.dinamica != null ? m.dinamica.toFixed(1) + " dB" : "—"]]; }
+      /* ---- slide 1: fibra 1 | fibra 2 (análise automática, parâmetros, eventos) ---- */
+      var s1 = mk(), x = s1.x; head(x, 1, " — análise de cada fibra");
+      var cw = (W - 2 * M - 40) / 2;
+      function col(x0, color, label, name, PP, AA) {
+        var y = 106; x.fillStyle = color; x.fillRect(x0, y, cw, 50); x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "800 22px " + FN; x.fillText(fit(x, label + "  ·  " + name, cw - 24), x0 + 14, y + 26);
+        y = 166; var vc = COR[AA.sev]; x.fillStyle = vc + "1f"; x.fillRect(x0, y, 360, 52); x.strokeStyle = vc; x.lineWidth = 2; x.strokeRect(x0 + 1, y + 1, 358, 50);
+        x.fillStyle = vc; x.textAlign = "center"; x.font = "800 22px " + FN; x.fillText(ROT[AA.sev], x0 + 180, y + 27);
+        x.textAlign = "left"; x.fillStyle = MT; x.font = "500 16px " + FN; x.fillText(fit(x, (PP.fxd.comprimentoOnda || "") + " nm · pulso " + PP.fxd.pulso + " ns · IOR " + PP.fxd.ior.toFixed(4), cw - 380), x0 + 376, y + 27);
+        /* métricas */
+        y = 230; var k = kp(PP, AA), bw = (cw - 3 * 10) / 4;
+        k.forEach(function (it, i) { var bx = x0 + (i % 4) * (bw + 10), by = y + Math.floor(i / 4) * 66; x.fillStyle = "#f1f5f9"; x.fillRect(bx, by, bw, 58); x.textAlign = "left"; x.fillStyle = MT; x.font = "600 12px " + FN; x.fillText(it[0].toUpperCase(), bx + 10, by + 16); x.fillStyle = TX; x.font = "800 18px " + FN; x.fillText(fit(x, it[1], bw - 16), bx + 10, by + 40); });
+        /* achados */
+        y = 374; x.fillStyle = color; x.font = "800 13px " + FN; x.textAlign = "left"; x.fillText("ANÁLISE AUTOMÁTICA — PRINCIPAIS ACHADOS", x0, y); y += 20;
+        var fl = AA.findings.filter(function (f) { return f.sev !== "info"; }).concat(AA.findings.filter(function (f) { return f.sev === "info"; })), show = fl.slice(0, 4);
+        if (!show.length) { x.fillStyle = COR.ok; x.font = "600 16px " + FN; x.fillText("● Nenhuma anomalia encontrada nos limites configurados", x0, y + 12); }
+        show.forEach(function (f, i) { var yy = y + 12 + i * 27; x.fillStyle = COR[f.sev]; x.beginPath(); x.arc(x0 + 6, yy, 6, 0, 6.2832); x.fill(); x.fillStyle = TX; x.font = "700 15px " + FN; var t1 = f.titulo + ": "; x.fillText(t1, x0 + 20, yy); var w1 = x.measureText(t1).width; x.font = "500 15px " + FN; x.fillStyle = MT; x.fillText(fit(x, f.det, cw - 30 - w1), x0 + 20 + w1, yy); });
+        if (fl.length > 4) { x.fillStyle = MT; x.font = "500 14px " + FN; x.fillText("+ " + (fl.length - 4) + " outro(s) achado(s)", x0 + 20, y + 12 + 4 * 27); }
+        /* parâmetros */
+        y = 540; x.fillStyle = color; x.font = "800 13px " + FN; x.fillText("PARÂMETROS DO ENSAIO", x0, y); y += 16;
+        var f = PP.fxd, su = PP.sup, pr = [["Comprimento de onda", (f.comprimentoOnda || "—") + " nm"], ["Largura de pulso", f.pulso + " ns"], ["Alcance", f.alcance.toFixed(2) + " km"], ["Resolução", f.dxM.toFixed(2) + " m"], ["Índice de refração", f.ior.toFixed(5)], ["Médias", String(f.medias)], ["Data do ensaio", fmtData(f.data)], ["Equipamento", [su.fornecedor, su.otdr].filter(Boolean).join(" ") || "—"]];
+        pr.forEach(function (it, i) { var cx = x0 + (i % 2) * (cw / 2 + 4), cy = y + 12 + Math.floor(i / 2) * 25; x.textAlign = "left"; x.fillStyle = MT; x.font = "500 14px " + FN; x.fillText(it[0], cx, cy); x.fillStyle = TX; x.font = "700 14px " + FN; x.textAlign = "right"; x.fillText(fit(x, it[1], cw / 2 - 150), cx + cw / 2 - 18, cy); });
+        /* eventos */
+        y = 676; x.textAlign = "left"; x.fillStyle = color; x.font = "800 13px " + FN; x.fillText("TABELA DE EVENTOS", x0, y); y += 10;
+        var cols = [46, 170, 130, 130, 130, 0]; cols[5] = cw - cols.slice(0, 5).reduce(function (a, b) { return a + b; }, 0);
+        var hd = ["#", "Tipo", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Status"], xs = [x0]; cols.forEach(function (c, i) { xs.push(xs[i] + c); });
+        x.fillStyle = "#e9eef3"; x.fillRect(x0, y, cw, 26); x.fillStyle = MT; x.font = "700 12px " + FN; x.textAlign = "center"; hd.forEach(function (t, i) { x.fillText(t, (xs[i] + xs[i + 1]) / 2, y + 14); });
+        var maxR = 10, ev = PP.events.slice(0, maxR);
+        ev.forEach(function (e, k) { var yy = y + 26 + k * 28; if (k % 2) { x.fillStyle = "#f6f8fa"; x.fillRect(x0, yy, cw, 28); } var sv = AA.evSev[k] || "ok";
+          var v = [String(e.n), tipoCurto(e), e.dist.toFixed(3), e.fim_de_fibra ? "—" : e.perda.toFixed(2), e.natureza !== "nrefl" && e.refl ? e.refl.toFixed(1) : "—", sv === "ok" ? "OK" : sv === "bad" ? "CRÍTICO" : sv === "warn" ? "ATENÇÃO" : "INFO"];
+          v.forEach(function (t, i) { x.fillStyle = i === 5 ? COR[sv] : TX; x.font = (i === 5 ? "800 " : "500 ") + "15px " + FN; x.textAlign = "center"; x.fillText(t, (xs[i] + xs[i + 1]) / 2, yy + 15); }); });
+        if (PP.events.length > maxR) { x.fillStyle = MT; x.font = "500 13px " + FN; x.textAlign = "left"; x.fillText("+ " + (PP.events.length - maxR) + " evento(s) — veja a tabela completa na ferramenta", x0, y + 26 + maxR * 28 + 14); }
+      }
+      col(M, CA, l1, na, P, A); col(M + cw + 40, CB, l2, nb, C, B);
+      x.fillStyle = MT; x.font = "500 12px " + FN; x.textAlign = "left"; x.fillText("Análise automática por regras (limites de emenda, conector, reflectância e atenuação). Apoio à decisão — a interpretação final é do analista.", M, H - 22);
+      out.push(s1.cv);
+      /* ---- slides 2..n: tabela de eventos lado a lado ---- */
+      for (var pg = 0; pg < pages; pg++) {
+        var sl = mk(), z = sl.x; x = z; head(z, 2 + pg, " — eventos lado a lado" + (pages > 1 ? " (" + (pg + 1) + "/" + pages + ")" : ""));
+        var cw2 = (W - 2 * M - 24) / 2;
+        [[M, CA, l1, na, P, A], [M + cw2 + 24, CB, l2, nb, C, B]].forEach(function (c) { var xx = c[0]; z.fillStyle = c[1] + "16"; z.fillRect(xx, 104, cw2, 62); z.fillStyle = c[1]; z.fillRect(xx, 104, 5, 62); z.textAlign = "left"; z.font = "800 19px " + FN; z.fillText(fit(z, c[2] + "  ·  " + c[3], cw2 - 28), xx + 18, 124); var m = c[5].metricas; z.fillStyle = TX; z.font = "500 15px " + FN; z.fillText(fit(z, (c[4].fxd.comprimentoOnda || "") + " nm · pulso " + c[4].fxd.pulso + " ns · " + m.comprimento.toFixed(3) + " km · perda total " + f2c(m.perdaTotal, 2) + " dB · " + (m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—") + " · " + ROT[c[5].sev], cw2 - 28), xx + 18, 150); });
+        var ty = 188, HH = 38, RH = 38, cols2 = [90, 110, 110, 110, 150, 90, 110, 110, 110, 150, 120, 100], tw = cols2.reduce(function (a, b) { return a + b; }, 0), sc = (W - 2 * M) / tw; cols2 = cols2.map(function (c) { return c * sc; });
+        var xs2 = [M]; cols2.forEach(function (c, i) { xs2.push(xs2[i] + c); });
+        z.fillStyle = CA + "26"; z.fillRect(xs2[0], ty, xs2[5] - xs2[0], HH); z.fillStyle = CB + "26"; z.fillRect(xs2[5], ty, xs2[10] - xs2[5], HH); z.fillStyle = "#e9eef3"; z.fillRect(xs2[10], ty, xs2[12] - xs2[10], HH);
+        z.font = "800 16px " + FN; z.textAlign = "center"; z.fillStyle = CA; z.fillText(l1, (xs2[0] + xs2[5]) / 2, ty + HH / 2); z.fillStyle = CB; z.fillText(l2, (xs2[5] + xs2[10]) / 2, ty + HH / 2); z.fillStyle = TX; z.fillText("DIFERENÇA (" + l1.toLowerCase() + " − " + l2.toLowerCase() + ")", (xs2[10] + xs2[12]) / 2, ty + HH / 2);
+        var hd2 = ["Evento", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Evento", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Δ perda (dB)", "Δ pos. (m)"], ty2 = ty + HH;
+        z.font = "700 14px " + FN; z.fillStyle = MT; hd2.forEach(function (t, i) { z.fillText(t, (xs2[i] + xs2[i + 1]) / 2, ty2 + HH / 2); });
+        z.strokeStyle = BD; z.lineWidth = 1; z.beginPath(); z.moveTo(M, ty2 + HH); z.lineTo(W - M, ty2 + HH); z.stroke();
+        var rows = D.rows.slice(pg * perPage, (pg + 1) * perPage), y0 = ty2 + HH;
+        rows.forEach(function (r, k) {
+          var yy = y0 + k * RH, mid = yy + RH / 2; if (k % 2) { z.fillStyle = "#f6f8fa"; z.fillRect(M, yy, W - 2 * M, RH); }
+          function side(c, o) { z.textAlign = "center"; z.fillStyle = TX; z.font = "500 16px " + FN; if (!c) { z.fillStyle = MT; z.fillText("— não encontrado nesta curva —", (xs2[o] + xs2[o + 5]) / 2, mid); return; } [c.tipo + " " + c.n, c.pos.toFixed(3), f2c(c.perda, 2), f2c(c.refl, 1), f2c(c.att, 3)].forEach(function (t, i) { z.fillText(t, (xs2[o + i] + xs2[o + i + 1]) / 2, mid); }); }
+          side(r.a, 0); side(r.b, 5);
+          var big = r.dp != null && Math.abs(r.dp) >= 0.15; z.textAlign = "center"; z.font = "800 16px " + FN; z.fillStyle = big ? "#b45309" : TX; z.fillText(sg2(r.dp, 2), (xs2[10] + xs2[11]) / 2, mid); z.font = "500 16px " + FN; z.fillStyle = TX; z.fillText(sg2(r.dx, 0), (xs2[11] + xs2[12]) / 2, mid);
+        });
+        var yEnd = y0 + rows.length * RH;
+        [[0, CA], [5, CB], [10, BD]].forEach(function (c) { z.strokeStyle = c[1]; z.lineWidth = 2; z.beginPath(); z.moveTo(xs2[c[0]], ty); z.lineTo(xs2[c[0]], yEnd); z.stroke(); });
+        z.strokeStyle = BD; z.lineWidth = 1; z.beginPath(); z.moveTo(M, yEnd); z.lineTo(W - M, yEnd); z.stroke();
+        z.textAlign = "left"; z.fillStyle = MT; z.font = "500 13px " + FN; z.fillText("Eventos pareados pela posição (tolerância " + (D.tol * 1000).toFixed(0) + " m). Δ = " + l1.toLowerCase() + " − " + l2.toLowerCase() + "; diferenças de perda ≥ 0,15 dB em destaque. Análise de apoio — a interpretação final é do analista.", M, H - 22);
+        out.push(sl.cv);
+      }
+      return out;
     }
+
     function cmpText() {
       var D = cmpData(), t = "Comparação de curvas OTDR\n" + (cfg.title || "") + "\nATUAL: " + cur().name + "\nCOMPARADA: " + S.cmpName + "\n\nPos(km) | Perda atual | Perda comp. | Δ\n";
       D.rows.forEach(function (r) { t += (r.a ? r.a.pos : r.b.pos).toFixed(3) + " | " + (r.a ? f2c(r.a.perda, 2) : "—") + " | " + (r.b ? f2c(r.b.perda, 2) : "—") + " | " + sg2(r.dp, 2) + "\n"; });
       return t;
     }
-    function shareCmp(mode) {
+    function exportCmp(mode) {
       var msg = document.getElementById("sv-shm"); function say(t) { if (msg) msg.textContent = t; }
-      var cv = cmpCanvas(), nome = "comparacao_curvas_" + cur().name.replace(/\.sor$/i, "") + "_x_" + S.cmpName.replace(/\.sor$/i, "") + ".png";
-      cv.toBlob(function (bl) {
-        if (!bl) { say("Não foi possível gerar a imagem."); return; }
-        var file = null; try { file = new File([bl], nome, { type: "image/png" }); } catch (e) { }
-        function save() { var a = document.createElement("a"), u = URL.createObjectURL(bl); a.href = u; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); say("Imagem baixada: " + nome); }
-        if (mode === "share" && navigator.share && file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: "Comparação de curvas OTDR", text: cmpText() }).then(function () { say("Compartilhado."); }).catch(function (e) { if (e && e.name !== "AbortError") save(); });
-        } else save();
-      }, "image/png");
+      var cvs; try { cvs = slidesCmp(); } catch (e) { say("Erro ao gerar slides: " + (e && e.message || e)); return; }
+      var base = "comparacao_" + cur().name.replace(/\.sor$/i, "") + "_x_" + S.cmpName.replace(/\.sor$/i, "");
+      function save(bl, nome) { var a = document.createElement("a"), u = URL.createObjectURL(bl); a.href = u; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); }
+      if (mode === "pptx") {
+        if (!window.PptxGenJS) { say("Biblioteca de PowerPoint não carregada."); return; }
+        try {
+          var pp = new window.PptxGenJS(); pp.layout = "LAYOUT_WIDE";
+          cvs.forEach(function (c) { var sl = pp.addSlide(); sl.background = { color: "FFFFFF" }; sl.addImage({ data: c.toDataURL("image/png"), x: 0, y: 0, w: 13.333, h: 7.5 }); });
+          pp.writeFile({ fileName: base + ".pptx" }).then(function () { say("PowerPoint gerado: " + cvs.length + " slide(s) 16:9 (13,33 × 7,5 pol)."); });
+        } catch (e) { say("Erro ao gerar PowerPoint: " + (e && e.message || e)); }
+        return;
+      }
+      var out = [], n = 0;
+      cvs.forEach(function (c, i) { c.toBlob(function (bl) { out[i] = bl; if (++n === cvs.length) done(); }, "image/png"); });
+      function done() {
+        var nomes = out.map(function (b, i) { return base + "_slide" + (i + 1) + ".png"; }), files = [];
+        try { files = out.map(function (b, i) { return new File([b], nomes[i], { type: "image/png" }); }); } catch (e) { }
+        function baixar() {
+          if (out.length === 1) { save(out[0], nomes[0]); say("Imagem 16:9 (1920×1080) baixada."); return; }
+          if (!window.JSZip) { out.forEach(function (b, i) { save(b, nomes[i]); }); say(out.length + " imagens 16:9 baixadas."); return; }
+          var z = new window.JSZip(); out.forEach(function (b, i) { z.file(nomes[i], b); });
+          z.generateAsync({ type: "blob" }).then(function (zb) { save(zb, base + "_slides.zip"); say(out.length + " slides 16:9 (1920×1080) em um ZIP."); });
+        }
+        if (mode === "share" && navigator.share && files.length && navigator.canShare && navigator.canShare({ files: files })) {
+          navigator.share({ files: files, title: "Comparação de curvas OTDR", text: cmpText() }).then(function () { say("Compartilhado."); }).catch(function (e) { if (e && e.name !== "AbortError") baixar(); });
+        } else baixar();
+      }
     }
+
     function csvCmp() {
       var D = cmpData(), t = "pos_atual_km;evento_atual;perda_atual_dB;refl_atual_dB;att_atual_dB_km;pos_comp_km;evento_comp;perda_comp_dB;refl_comp_dB;att_comp_dB_km;delta_perda_dB;delta_pos_m\n";
       function c(o) { return o ? [o.pos.toFixed(4), o.tipo + " " + o.n, f2c(o.perda, 3), f2c(o.refl, 2), f2c(o.att, 4)] : ["", "", "", "", ""]; }
@@ -606,8 +658,8 @@
           S.cmpP = pick.P; S.cmpA = analyze(pick.P, {}); S.cmpName = pick.name; S.cmpRes = compare(cur().P, pick.P); S.cmpMsg = "Comparando com " + pick.name + " (tracejado roxo). Passe o mouse ou use os cursores A/B para ler as duas curvas no mesmo ponto."; render();
         }).catch(function (e) { S.cmpP = null; S.cmpRes = null; S.cmpMsg = "Erro ao carregar: " + (e && e.message || e); render(); });
       };
-      var b1 = $("sv-shc"); if (b1) b1.onclick = function () { shareCmp("share"); };
-      var b2 = $("sv-pngc"); if (b2) b2.onclick = function () { shareCmp("png"); };
+      var b1 = $("sv-shc"); if (b1) b1.onclick = function () { exportCmp("share"); };
+      var b2 = $("sv-pngc"); if (b2) b2.onclick = function () { exportCmp("png"); }; var b4 = $("sv-pptc"); if (b4) b4.onclick = function () { exportCmp("pptx"); };
       var b3 = $("sv-csvc"); if (b3) b3.onclick = csvCmp;
       var ct = $("sv-cmpt"); if (ct) ct.onclick = function () { S.showCmp = !S.showCmp; render(); };
       var cv = $("sv-cv"), moved = 0;
