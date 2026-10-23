@@ -258,6 +258,16 @@
     return out;
   }
 
+  function paramList(nm, P) {
+    var f = P.fxd, g = P.gen, su = P.sup;
+    return [
+        ["Arquivo", nm], ["Versão SOR", P.version], ["Data do ensaio", fmtData(f.data)], ["Comprimento de onda", (f.comprimentoOnda || "") + " nm"], ["Largura de pulso", f.pulso + " ns"],
+        ["Alcance", f.alcance.toFixed(2) + " km"], ["Resolução", f.dxM.toFixed(2) + " m"], ["Pontos", P.trace.n], ["Índice de refração", f.ior.toFixed(5)], ["Médias", f.medias + (f.tempoMedia ? " (" + f.tempoMedia.toFixed(0) + " s)" : "")],
+        ["Tipo de traço", f.tipoTraco], ["Limiar de perda", f.limPerda.toFixed(3) + " dB"], ["Limiar de reflexão", f.limRefl.toFixed(1) + " dB"], ["Limiar fim de fibra", f.limFim.toFixed(1) + " dB"],
+        ["Cabo", g.cabo], ["Fibra", g.fibra], ["Local A", g.locA], ["Local B", g.locB], ["Operador", g.operador], ["Comentários", g.comentarios],
+        ["Equipamento", [su.fornecedor, su.otdr].filter(Boolean).join(" ")], ["Série", su.otdrSerie], ["Módulo", su.modulo], ["Software", su.software]
+      ].filter(function (r) { return r[1] != null && String(r[1]).trim() !== ""; });
+  }
   /* ---------------- VISUALIZADOR ---------------- */
   var CSS_ID = "tbsor-css";
   var CSS = ".sv{position:fixed;inset:0;z-index:300;background:var(--bg);color:var(--tx);overflow:auto;font-family:'Inter',-apple-system,system-ui,sans-serif}" +
@@ -404,17 +414,12 @@
       h += '<div class="sv-card"><div class="sv-lb">Tabela de eventos</div><div class="sv-tbw"><table class="sv-tb"><thead><tr><th>#</th><th>Tipo</th><th>Posição (km)</th><th>Perda (dB)</th>' + (bi ? "<th>Média LR/RL (dB)</th>" : "") + "<th>Reflect. (dB)</th><th>Atenuação trecho seguinte (dB/km)</th><th>Status</th></tr></thead><tbody>" +
         P.events.map(function (e, k) {
           var sv = A.evSev[k] || "ok", sec = A.secoes.filter(function (x) { return x.de === e.n; })[0];
-          return '<tr class="ev" data-ev="' + k + '"><td>' + e.n + "</td><td>" + tipoTxt(e) + "</td><td>" + e.dist.toFixed(3) + "</td><td>" + (e.fim_de_fibra ? "—" : e.perda.toFixed(2)) + "</td>" + (bi ? "<td>" + (bi[k] ? bi[k].media.toFixed(2) : "—") + "</td>" : "") + "<td>" + (e.natureza !== "nrefl" && e.refl ? e.refl.toFixed(1) : "—") + "</td><td>" + (sec ? sec.att.toFixed(3) : "—") + '</td><td><span class="sv-chip" style="color:' + COR[sv] + ";border-color:" + COR[sv] + '">' + (sv === "ok" ? "OK" : sv === "bad" ? "CRÍTICO" : sv === "warn" ? "ATENÇÃO" : "INFO") + "</span></td></tr>";
+          var hi30 = !e.fim_de_fibra && e.perda > 0.30;
+          return '<tr class="ev" data-ev="' + k + '"' + (hi30 ? ' style="background:rgba(245,158,11,.16);box-shadow:inset 4px 0 #d97706"' : "") + '><td>' + e.n + "</td><td>" + tipoTxt(e) + "</td><td>" + e.dist.toFixed(3) + "</td><td" + (hi30 ? ' style="color:#d97706;font-weight:800"' : "") + ">" + (e.fim_de_fibra ? "—" : e.perda.toFixed(2) + (hi30 ? " ▲" : "")) + "</td>" + (bi ? "<td>" + (bi[k] ? bi[k].media.toFixed(2) : "—") + "</td>" : "") + "<td>" + (e.natureza !== "nrefl" && e.refl ? e.refl.toFixed(1) : "—") + "</td><td>" + (sec ? sec.att.toFixed(3) : "—") + '</td><td><span class="sv-chip" style="color:' + COR[sv] + ";border-color:" + COR[sv] + '">' + (sv === "ok" ? "OK" : sv === "bad" ? "CRÍTICO" : sv === "warn" ? "ATENÇÃO" : "INFO") + "</span></td></tr>";
         }).join("") + "</tbody></table></div>" + (bi ? '<div class="sv-note">Média bidirecional calculada entre as duas curvas deste teste (posições espelhadas).</div>' : "") + '<div style="margin-top:8px"><button class="sv-btn" id="sv-csve">⬇ Eventos CSV</button></div></div>';
       }
       /* parâmetros */
-      var pr = [
-        ["Arquivo", it.name], ["Versão SOR", P.version], ["Data do ensaio", fmtData(f.data)], ["Comprimento de onda", (f.comprimentoOnda || "") + " nm"], ["Largura de pulso", f.pulso + " ns"],
-        ["Alcance", f.alcance.toFixed(2) + " km"], ["Resolução", f.dxM.toFixed(2) + " m"], ["Pontos", P.trace.n], ["Índice de refração", f.ior.toFixed(5)], ["Médias", f.medias + (f.tempoMedia ? " (" + f.tempoMedia.toFixed(0) + " s)" : "")],
-        ["Tipo de traço", f.tipoTraco], ["Limiar de perda", f.limPerda.toFixed(3) + " dB"], ["Limiar de reflexão", f.limRefl.toFixed(1) + " dB"], ["Limiar fim de fibra", f.limFim.toFixed(1) + " dB"],
-        ["Cabo", g.cabo], ["Fibra", g.fibra], ["Local A", g.locA], ["Local B", g.locB], ["Operador", g.operador], ["Comentários", g.comentarios],
-        ["Equipamento", [su.fornecedor, su.otdr].filter(Boolean).join(" ")], ["Série", su.otdrSerie], ["Módulo", su.modulo], ["Software", su.software]
-      ].filter(function (r) { return r[1] !== "" && r[1] != null; });
+        var pr = paramList(it.name, P);
       h += '<div class="sv-card"><div class="sv-lb">Dados do arquivo (leitura completa)</div><div class="sv-pg">' + pr.map(function (r) { return "<div><span>" + esc(r[0]) + "</span><b>" + esc(r[1]) + "</b></div>"; }).join("") + "</div></div></div>";
       root.innerHTML = h; bind(); draw();
     }
@@ -446,14 +451,14 @@
     function sg2(v, d) { return v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(d); }
     function cmpCard() {
       var D = cmpData(), A = cur().A, na = cur().name, nb = S.cmpName, CA = "#0ea5e9", CB = "#a78bfa";
-      function side(c, col) { return c ? "<td style='border-left:2px solid " + col + "'>" + c.tipo + " " + c.n + "</td><td>" + c.pos.toFixed(3) + "</td><td>" + f2c(c.perda, 2) + "</td><td>" + f2c(c.refl, 1) + "</td><td>" + f2c(c.att, 3) + "</td>" : "<td colspan='5' style='border-left:2px solid " + col + ";color:var(--mt);text-align:center'>— não encontrado nesta curva —</td>"; }
+      function side(c, col) { return c ? "<td style='border-left:2px solid " + col + "'>" + c.tipo + " " + c.n + "</td><td>" + c.pos.toFixed(3) + "</td><td" + (c.perda != null && c.perda > 0.30 ? " style='background:rgba(245,158,11,.18);color:#d97706;font-weight:800'" : "") + ">" + f2c(c.perda, 2) + (c.perda != null && c.perda > 0.30 ? " ▲" : "") + "</td><td>" + f2c(c.refl, 1) + "</td><td>" + f2c(c.att, 3) + "</td>" : "<td colspan='5' style='border-left:2px solid " + col + ";color:var(--mt);text-align:center'>— não encontrado nesta curva —</td>"; }
       var h = '<div class="sv-card"><div class="sv-lb">Tabela de eventos — lado a lado</div><div class="sv-tbw"><table class="sv-tb"><thead><tr><th style="border-bottom:3px solid ' + CA + ';color:' + CA + '" colspan="5">' + lbl1() + ' · ' + esc(na) + '</th><th style="border-bottom:3px solid ' + CB + ';color:' + CB + ';border-left:2px solid ' + CB + '" colspan="5">' + lbl2() + ' · ' + esc(nb) + '</th><th colspan="2" style="border-left:2px solid var(--bd)">DIFERENÇA</th></tr>' +
         '<tr><th style="border-left:2px solid ' + CA + '">Evento</th><th>Pos. (km)</th><th>Perda (dB)</th><th>Refl. (dB)</th><th>Atenuação (dB/km)</th><th style="border-left:2px solid ' + CB + '">Evento</th><th>Pos. (km)</th><th>Perda (dB)</th><th>Refl. (dB)</th><th>Atenuação (dB/km)</th><th style="border-left:2px solid var(--bd)">Δ perda (dB)</th><th>Δ pos. (m)</th></tr></thead><tbody>' +
         D.rows.map(function (r) {
           var big = r.dp != null && Math.abs(r.dp) >= 0.15, c = big ? "#ca8a04" : "var(--tx)";
           return "<tr" + (r.ai >= 0 ? ' class="ev" data-ev="' + r.ai + '"' : "") + ">" + side(r.a, CA) + side(r.b, CB) + "<td style='border-left:2px solid var(--bd);font-weight:700;color:" + c + "'>" + sg2(r.dp, 2) + "</td><td>" + sg2(r.dx, 0) + "</td></tr>";
         }).join("") + "</tbody></table></div>" +
-        '<div class="sv-note">Δ = ' + lbl1().toLowerCase() + ' − ' + lbl2().toLowerCase() + '. Eventos pareados pela posição (tolerância ' + (D.tol * 1000).toFixed(0) + ' m). Diferenças de perda ≥ 0,15 dB ficam em amarelo.</div>' +
+        '<div class="sv-note">Δ = ' + lbl1().toLowerCase() + ' − ' + lbl2().toLowerCase() + '. Eventos pareados pela posição (tolerância ' + (D.tol * 1000).toFixed(0) + ' m). Diferenças de perda ≥ 0,15 dB ficam em amarelo; perdas acima de 0,30 dB marcadas com ▲.</div>' +
         '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="sv-btn on" id="sv-shc">📤 Compartilhar (slides 16:9)</button><button class="sv-btn" id="sv-pptc">⬇ PowerPoint (.pptx)</button><button class="sv-btn" id="sv-pngc">⬇ PNG 16:9</button><button class="sv-btn" id="sv-csvc">⬇ CSV lado a lado</button><button class="sv-btn" id="sv-csve">⬇ Eventos CSV (atual)</button></div><div class="sv-note" id="sv-shm"></div></div>';
       return h;
     }
@@ -463,7 +468,7 @@
     function slidesCmp() {
       var W = 1920, H = 1080, M = 40, CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6", FN = "Inter,system-ui,sans-serif";
       var D = cmpData(), P = cur().P, A = cur().A, C = S.cmpP, B = S.cmpA, na = cur().name, nb = S.cmpName, l1 = lbl1(), l2 = lbl2();
-      var perPage = 17, pages = Math.max(1, Math.ceil(D.rows.length / perPage)), total = 1 + pages, out = [];
+      var perPage = 17, pages = Math.max(1, Math.ceil(D.rows.length / perPage)), total = 0, out = [], HI = 0.30;
       var when = new Date().toLocaleString("pt-BR");
       function mk() { var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var x = cv.getContext("2d"); x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H); x.textBaseline = "middle"; return { cv: cv, x: x }; }
       function fit(x, t, w) { t = String(t == null ? "" : t); if (x.measureText(t).width <= w) return t; while (t.length > 1 && x.measureText(t + "…").width > w) t = t.slice(0, -1); return t + "…"; }
@@ -473,47 +478,88 @@
         x.textAlign = "right"; x.font = "700 16px " + FN; x.fillText("TESTAR BARRAMENTO · V.tal     " + idx + "/" + total, W - M, 42);
       }
       function kp(PP, AA) { var m = AA.metricas; return [["Comprimento", m.comprimento.toFixed(3) + " km"], ["Perda total", m.perdaTotal != null ? m.perdaTotal.toFixed(2) + " dB" : "—"], ["Atenuação média", m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—"], ["ORL", m.orl ? m.orl.toFixed(1) + " dB" : "—"], ["Eventos", String(m.nEventos)], ["Pior perda", m.pior ? m.pior.perda.toFixed(2) + " dB @ " + m.pior.dist.toFixed(2) + " km" : "—"], ["Pior reflectância", m.piorRefl ? m.piorRefl.refl.toFixed(1) + " dB" : "—"], ["Faixa dinâmica", m.dinamica != null ? m.dinamica.toFixed(1) + " dB" : "—"]]; }
-      /* ---- slide 1: fibra 1 | fibra 2 (análise automática, parâmetros, eventos) ---- */
-      var s1 = mk(), x = s1.x; head(x, 1, " — análise de cada fibra");
-      var cw = (W - 2 * M - 40) / 2;
-      function col(x0, color, label, name, PP, AA) {
-        var y = 106; x.fillStyle = color; x.fillRect(x0, y, cw, 50); x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "800 22px " + FN; x.fillText(fit(x, label + "  ·  " + name, cw - 24), x0 + 14, y + 26);
-        y = 166; var vc = COR[AA.sev]; x.fillStyle = vc + "1f"; x.fillRect(x0, y, 360, 52); x.strokeStyle = vc; x.lineWidth = 2; x.strokeRect(x0 + 1, y + 1, 358, 50);
-        x.fillStyle = vc; x.textAlign = "center"; x.font = "800 22px " + FN; x.fillText(ROT[AA.sev], x0 + 180, y + 27);
-        x.textAlign = "left"; x.fillStyle = MT; x.font = "500 16px " + FN; x.fillText(fit(x, (PP.fxd.comprimentoOnda || "") + " nm · pulso " + PP.fxd.pulso + " ns · IOR " + PP.fxd.ior.toFixed(4), cw - 380), x0 + 376, y + 27);
-        /* métricas */
-        y = 230; var k = kp(PP, AA), bw = (cw - 3 * 10) / 4;
-        k.forEach(function (it, i) { var bx = x0 + (i % 4) * (bw + 10), by = y + Math.floor(i / 4) * 66; x.fillStyle = "#f1f5f9"; x.fillRect(bx, by, bw, 58); x.textAlign = "left"; x.fillStyle = MT; x.font = "600 12px " + FN; x.fillText(it[0].toUpperCase(), bx + 10, by + 16); x.fillStyle = TX; x.font = "800 18px " + FN; x.fillText(fit(x, it[1], bw - 16), bx + 10, by + 40); });
-        /* achados */
-        y = 374; x.fillStyle = color; x.font = "800 13px " + FN; x.textAlign = "left"; x.fillText("ANÁLISE AUTOMÁTICA — PRINCIPAIS ACHADOS", x0, y); y += 20;
-        var fl = AA.findings.filter(function (f) { return f.sev !== "info"; }).concat(AA.findings.filter(function (f) { return f.sev === "info"; })), show = fl.slice(0, 4);
-        if (!show.length) { x.fillStyle = COR.ok; x.font = "600 16px " + FN; x.fillText("● Nenhuma anomalia encontrada nos limites configurados", x0, y + 12); }
-        show.forEach(function (f, i) { var yy = y + 12 + i * 27; x.fillStyle = COR[f.sev]; x.beginPath(); x.arc(x0 + 6, yy, 6, 0, 6.2832); x.fill(); x.fillStyle = TX; x.font = "700 15px " + FN; var t1 = f.titulo + ": "; x.fillText(t1, x0 + 20, yy); var w1 = x.measureText(t1).width; x.font = "500 15px " + FN; x.fillStyle = MT; x.fillText(fit(x, f.det, cw - 30 - w1), x0 + 20 + w1, yy); });
-        if (fl.length > 4) { x.fillStyle = MT; x.font = "500 14px " + FN; x.fillText("+ " + (fl.length - 4) + " outro(s) achado(s)", x0 + 20, y + 12 + 4 * 27); }
-        /* parâmetros */
-        y = 540; x.fillStyle = color; x.font = "800 13px " + FN; x.fillText("PARÂMETROS DO ENSAIO", x0, y); y += 16;
-        var f = PP.fxd, su = PP.sup, pr = [["Comprimento de onda", (f.comprimentoOnda || "—") + " nm"], ["Largura de pulso", f.pulso + " ns"], ["Alcance", f.alcance.toFixed(2) + " km"], ["Resolução", f.dxM.toFixed(2) + " m"], ["Índice de refração", f.ior.toFixed(5)], ["Médias", String(f.medias)], ["Data do ensaio", fmtData(f.data)], ["Equipamento", [su.fornecedor, su.otdr].filter(Boolean).join(" ") || "—"]];
-        pr.forEach(function (it, i) { var cx = x0 + (i % 2) * (cw / 2 + 4), cy = y + 12 + Math.floor(i / 2) * 25; x.textAlign = "left"; x.fillStyle = MT; x.font = "500 14px " + FN; x.fillText(it[0], cx, cy); x.fillStyle = TX; x.font = "700 14px " + FN; x.textAlign = "right"; x.fillText(fit(x, it[1], cw / 2 - 150), cx + cw / 2 - 18, cy); });
-        /* eventos */
-        y = 676; x.textAlign = "left"; x.fillStyle = color; x.font = "800 13px " + FN; x.fillText("TABELA DE EVENTOS", x0, y); y += 10;
-        var cols = [46, 170, 130, 130, 130, 0]; cols[5] = cw - cols.slice(0, 5).reduce(function (a, b) { return a + b; }, 0);
-        var hd = ["#", "Tipo", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Status"], xs = [x0]; cols.forEach(function (c, i) { xs.push(xs[i] + c); });
-        x.fillStyle = "#e9eef3"; x.fillRect(x0, y, cw, 26); x.fillStyle = MT; x.font = "700 12px " + FN; x.textAlign = "center"; hd.forEach(function (t, i) { x.fillText(t, (xs[i] + xs[i + 1]) / 2, y + 14); });
-        var maxR = 10, ev = PP.events.slice(0, maxR);
-        ev.forEach(function (e, k) { var yy = y + 26 + k * 28; if (k % 2) { x.fillStyle = "#f6f8fa"; x.fillRect(x0, yy, cw, 28); } var sv = AA.evSev[k] || "ok";
-          var v = [String(e.n), tipoCurto(e), e.dist.toFixed(3), e.fim_de_fibra ? "—" : e.perda.toFixed(2), e.natureza !== "nrefl" && e.refl ? e.refl.toFixed(1) : "—", sv === "ok" ? "OK" : sv === "bad" ? "CRÍTICO" : sv === "warn" ? "ATENÇÃO" : "INFO"];
-          v.forEach(function (t, i) { x.fillStyle = i === 5 ? COR[sv] : TX; x.font = (i === 5 ? "800 " : "500 ") + "15px " + FN; x.textAlign = "center"; x.fillText(t, (xs[i] + xs[i + 1]) / 2, yy + 15); }); });
-        if (PP.events.length > maxR) { x.fillStyle = MT; x.font = "500 13px " + FN; x.textAlign = "left"; x.fillText("+ " + (PP.events.length - maxR) + " evento(s) — veja a tabela completa na ferramenta", x0, y + 26 + maxR * 28 + 14); }
+      /* ---- slides de cada fibra: conteúdo completo, continua no slide seguinte se não couber ---- */
+      var cw = (W - 2 * M - 40) / 2, TOP = 104, BOT = H - 46, mx = mk().x, x;
+      function wrap(t, w, font) { mx.font = font; var ws = String(t == null ? "" : t).split(/\s+/), ln = [], c = ""; ws.forEach(function (wd) { var tt = c ? c + " " + wd : wd; if (mx.measureText(tt).width > w && c) { ln.push(c); c = wd; } else c = tt; }); if (c) ln.push(c); return ln.length ? ln : [""]; }
+      function hiEv(e) { return !e.fim_de_fibra && e.perda > HI; }
+      function stTxt(sv) { return sv === "ok" ? "OK" : sv === "bad" ? "CRÍTICO" : sv === "warn" ? "ATENÇÃO" : "INFO"; }
+      function blocksFor(color, label, name, PP, AA) {
+        var Bk = [], f = PP.fxd;
+        function title(t) { return { h: 30, need: 90, d: function (x0, y) { x.textAlign = "left"; x.fillStyle = color; x.font = "800 14px " + FN; x.fillText(t, x0, y + 16); x.fillStyle = color; x.fillRect(x0, y + 26, cw, 2); } }; }
+        /* cabeçalho da fibra */
+        Bk.push({ h: 58, d: function (x0, y) { x.fillStyle = color; x.fillRect(x0, y, cw, 50); x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "800 22px " + FN; x.fillText(fit(x, label + "  ·  " + name, cw - 24), x0 + 14, y + 26); } });
+        Bk.push({ h: 62, d: function (x0, y) { var vc = COR[AA.sev]; x.fillStyle = vc + "1f"; x.fillRect(x0, y, 360, 52); x.strokeStyle = vc; x.lineWidth = 2; x.strokeRect(x0 + 1, y + 1, 358, 50); x.fillStyle = vc; x.textAlign = "center"; x.font = "800 22px " + FN; x.fillText(ROT[AA.sev], x0 + 180, y + 27); x.textAlign = "left"; x.fillStyle = MT; x.font = "500 16px " + FN; x.fillText(fit(x, (f.comprimentoOnda || "") + " nm · pulso " + f.pulso + " ns · IOR " + f.ior.toFixed(4), cw - 380), x0 + 376, y + 27); } });
+        /* resumo (indicadores) */
+        Bk.push({ h: 142, d: function (x0, y) { var k = kp(PP, AA), bw = (cw - 30) / 4; k.forEach(function (it, i) { var bx = x0 + (i % 4) * (bw + 10), by = y + Math.floor(i / 4) * 66; x.fillStyle = "#f1f5f9"; x.fillRect(bx, by, bw, 58); x.textAlign = "left"; x.fillStyle = MT; x.font = "600 12px " + FN; x.fillText(it[0].toUpperCase(), bx + 10, by + 16); x.fillStyle = TX; x.font = "800 18px " + FN; x.fillText(fit(x, it[1], bw - 16), bx + 10, by + 40); }); } });
+        /* achados — todos, texto completo */
+        Bk.push(title("ANÁLISE AUTOMÁTICA — ACHADOS (" + AA.findings.length + ")"));
+        if (!AA.findings.length) Bk.push({ h: 30, d: function (x0, y) { x.textAlign = "left"; x.fillStyle = COR.ok; x.font = "700 15px " + FN; x.fillText("● Nenhuma anomalia encontrada nos limites configurados", x0, y + 15); } });
+        AA.findings.forEach(function (fd) {
+          var ln = wrap(fd.det, cw - 26, "500 14px " + FN), tl = wrap(fd.titulo, cw - 26, "700 15px " + FN);
+          Bk.push({ h: tl.length * 20 + ln.length * 19 + 10, d: function (x0, y) { x.fillStyle = COR[fd.sev]; x.beginPath(); x.arc(x0 + 6, y + 11, 6, 0, 6.2832); x.fill(); x.textAlign = "left"; x.fillStyle = TX; x.font = "700 15px " + FN; tl.forEach(function (t, i) { x.fillText(t, x0 + 20, y + 11 + i * 20); }); x.fillStyle = MT; x.font = "500 14px " + FN; ln.forEach(function (t, i) { x.fillText(t, x0 + 20, y + 11 + tl.length * 20 + i * 19); }); } });
+        });
+        Bk.push({ h: 8, sp: 1, d: function () { } });
+        /* dados do arquivo — leitura completa */
+        Bk.push(title("DADOS DO ARQUIVO (LEITURA COMPLETA)"));
+        var pl = paramList(name, PP), half = cw / 2 - 10, pend = null;
+        function pairRow(l, r) { Bk.push({ h: 26, d: function (x0, y) { [l, r].forEach(function (it, i) { if (!it) return; var cx = x0 + i * (cw / 2 + 10); x.textAlign = "left"; x.fillStyle = MT; x.font = "500 14px " + FN; x.fillText(it[0], cx, y + 13); x.textAlign = "right"; x.fillStyle = TX; x.font = "700 14px " + FN; x.fillText(String(it[1]), cx + half, y + 13); }); x.strokeStyle = BD; x.lineWidth = 1; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(x0, y + 25); x.lineTo(x0 + cw, y + 25); x.stroke(); x.setLineDash([]); } }); }
+        pl.forEach(function (it) {
+          mx.font = "500 14px " + FN; var lw = mx.measureText(it[0]).width; mx.font = "700 14px " + FN; var vw = mx.measureText(String(it[1])).width;
+          if (lw + vw + 20 <= half) { if (pend) { pairRow(pend, it); pend = null; } else pend = it; }
+          else {
+            if (pend) { pairRow(pend, null); pend = null; }
+            var ln = wrap(it[1], cw - 200, "700 14px " + FN);
+            Bk.push({ h: ln.length * 20 + 8, d: function (x0, y) { x.textAlign = "left"; x.fillStyle = MT; x.font = "500 14px " + FN; x.fillText(it[0], x0, y + 13); x.fillStyle = TX; x.font = "700 14px " + FN; ln.forEach(function (t, i) { x.fillText(t, x0 + 190, y + 13 + i * 20); }); x.strokeStyle = BD; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(x0, y + ln.length * 20 + 7); x.lineTo(x0 + cw, y + ln.length * 20 + 7); x.stroke(); x.setLineDash([]); } });
+          }
+        });
+        if (pend) pairRow(pend, null);
+        Bk.push({ h: 10, sp: 1, d: function () { } });
+        /* tabela de eventos — todos */
+        Bk.push(title("TABELA DE EVENTOS (" + PP.events.length + ")"));
+        var cols = [44, 150, 116, 112, 112, 112, 0]; cols[6] = cw - cols.slice(0, 6).reduce(function (a, b) { return a + b; }, 0);
+        var xsR = [0]; cols.forEach(function (c, i) { xsR.push(xsR[i] + c); });
+        var hdr = { h: 28, hdr: 1, d: function (x0, y) { x.fillStyle = "#e9eef3"; x.fillRect(x0, y, cw, 28); x.fillStyle = MT; x.font = "700 12px " + FN; x.textAlign = "center"; ["#", "Tipo", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Status"].forEach(function (t, i) { x.fillText(t, x0 + (xsR[i] + xsR[i + 1]) / 2, y + 15); }); } };
+        Bk.push(hdr);
+        PP.events.forEach(function (e, k) {
+          var sv = AA.evSev[k] || "ok", sec = AA.secoes.filter(function (q) { return q.de === e.n; })[0], hi = hiEv(e);
+          Bk.push({ h: 29, ev: 1, d: function (x0, y) {
+            if (hi) { x.fillStyle = "#fef3c7"; x.fillRect(x0, y, cw, 29); x.fillStyle = "#d97706"; x.fillRect(x0, y, 5, 29); } else if (k % 2) { x.fillStyle = "#f6f8fa"; x.fillRect(x0, y, cw, 29); }
+            var v = [String(e.n), tipoCurto(e), e.dist.toFixed(3), e.fim_de_fibra ? "—" : e.perda.toFixed(2), e.natureza !== "nrefl" && e.refl ? e.refl.toFixed(1) : "—", sec ? sec.att.toFixed(3) : "—", stTxt(sv)];
+            v.forEach(function (t, i) { x.textAlign = "center"; x.fillStyle = i === 6 ? COR[sv] : i === 3 && hi ? "#b45309" : TX; x.font = (i === 6 || (i === 3 && hi) ? "800 " : "500 ") + "15px " + FN; x.fillText(t + (i === 3 && hi ? " ▲" : ""), x0 + (xsR[i] + xsR[i + 1]) / 2, y + 15); });
+          } });
+        });
+        Bk.hdr = hdr; Bk.cont = function (x0, y) { x.fillStyle = color + "1a"; x.fillRect(x0, y, cw, 34); x.fillStyle = color; x.fillRect(x0, y, 5, 34); x.textAlign = "left"; x.font = "800 16px " + FN; x.fillText(fit(x, label + "  ·  " + name + "  (continuação)", cw - 24), x0 + 14, y + 18); };
+        return Bk;
       }
-      col(M, CA, l1, na, P, A); col(M + cw + 40, CB, l2, nb, C, B);
-      x.fillStyle = MT; x.font = "500 12px " + FN; x.textAlign = "left"; x.fillText("Análise automática por regras (limites de emenda, conector, reflectância e atenuação). Apoio à decisão — a interpretação final é do analista.", M, H - 22);
-      out.push(s1.cv);
+      function paginate(Bk) {
+        var pgs = [[]], y = TOP, inTab = false;
+        Bk.forEach(function (b) {
+          if (b.hdr) inTab = true;
+          if (y + Math.max(b.h, b.need || 0) > BOT) {
+            pgs.push([]); y = TOP; pgs[pgs.length - 1].push({ d: Bk.cont, y: y }); y += 42;
+            if (b.sp) return;
+            if (b.ev && inTab) { pgs[pgs.length - 1].push({ d: Bk.hdr.d, y: y }); y += Bk.hdr.h; }
+          }
+          pgs[pgs.length - 1].push({ d: b.d, y: y }); y += b.h;
+        });
+        return pgs;
+      }
+      var pA = paginate(blocksFor(CA, l1, na, P, A)), pB = paginate(blocksFor(CB, l2, nb, C, B)), nFib = Math.max(pA.length, pB.length);
+      total = nFib + pages;
+      for (var fp = 0; fp < nFib; fp++) {
+        var sf = mk(); x = sf.x; head(x, fp + 1, " — análise de cada fibra" + (nFib > 1 ? " (" + (fp + 1) + "/" + nFib + ")" : ""));
+        (pA[fp] || []).forEach(function (it) { it.d(M, it.y); });
+        (pB[fp] || []).forEach(function (it) { it.d(M + cw + 40, it.y); });
+        x.strokeStyle = BD; x.lineWidth = 1; x.beginPath(); x.moveTo(W / 2, TOP); x.lineTo(W / 2, BOT); x.stroke();
+        x.fillStyle = MT; x.font = "500 12px " + FN; x.textAlign = "left"; x.fillText("Eventos com perda acima de " + HI.toFixed(2).replace(".", ",") + " dB em destaque (▲). Análise automática por regras — apoio à decisão; a interpretação final é do analista.", M, H - 22);
+        out.push(sf.cv);
+      }
       /* ---- slides 2..n: tabela de eventos lado a lado ---- */
       for (var pg = 0; pg < pages; pg++) {
-        var sl = mk(), z = sl.x; x = z; head(z, 2 + pg, " — eventos lado a lado" + (pages > 1 ? " (" + (pg + 1) + "/" + pages + ")" : ""));
+        var sl = mk(), z = sl.x; x = z; head(z, nFib + 1 + pg, " — eventos lado a lado" + (pages > 1 ? " (" + (pg + 1) + "/" + pages + ")" : ""));
         var cw2 = (W - 2 * M - 24) / 2;
-        [[M, CA, l1, na, P, A], [M + cw2 + 24, CB, l2, nb, C, B]].forEach(function (c) { var xx = c[0]; z.fillStyle = c[1] + "16"; z.fillRect(xx, 104, cw2, 62); z.fillStyle = c[1]; z.fillRect(xx, 104, 5, 62); z.textAlign = "left"; z.font = "800 19px " + FN; z.fillText(fit(z, c[2] + "  ·  " + c[3], cw2 - 28), xx + 18, 124); var m = c[5].metricas; z.fillStyle = TX; z.font = "500 15px " + FN; z.fillText(fit(z, (c[4].fxd.comprimentoOnda || "") + " nm · pulso " + c[4].fxd.pulso + " ns · " + m.comprimento.toFixed(3) + " km · perda total " + f2c(m.perdaTotal, 2) + " dB · " + (m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—") + " · " + ROT[c[5].sev], cw2 - 28), xx + 18, 150); });
-        var ty = 188, HH = 38, RH = 38, cols2 = [90, 110, 110, 110, 150, 90, 110, 110, 110, 150, 120, 100], tw = cols2.reduce(function (a, b) { return a + b; }, 0), sc = (W - 2 * M) / tw; cols2 = cols2.map(function (c) { return c * sc; });
+        [[M, CA, l1, na, P, A], [M + cw2 + 24, CB, l2, nb, C, B]].forEach(function (c) { var xx = c[0], m = c[5].metricas, ln = wrap((c[4].fxd.comprimentoOnda || "") + " nm · pulso " + c[4].fxd.pulso + " ns · comprimento " + m.comprimento.toFixed(3) + " km · perda total " + f2c(m.perdaTotal, 2) + " dB · atenuação média " + (m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—") + " · ORL " + (m.orl ? m.orl.toFixed(1) + " dB" : "—") + " · " + m.nEventos + " eventos · " + ROT[c[5].sev], cw2 - 30, "500 15px " + FN); z.fillStyle = c[1] + "16"; z.fillRect(xx, 100, cw2, 84); z.fillStyle = c[1]; z.fillRect(xx, 100, 5, 84); z.textAlign = "left"; z.font = "800 19px " + FN; z.fillText(fit(z, c[2] + "  ·  " + c[3], cw2 - 28), xx + 18, 120); z.fillStyle = TX; z.font = "500 15px " + FN; ln.slice(0, 2).forEach(function (t, q) { z.fillText(t, xx + 18, 146 + q * 22); }); });
+        var ty = 198, HH = 38, RH = 38, cols2 = [90, 110, 110, 110, 150, 90, 110, 110, 110, 150, 120, 100], tw = cols2.reduce(function (a, b) { return a + b; }, 0), sc = (W - 2 * M) / tw; cols2 = cols2.map(function (c) { return c * sc; });
         var xs2 = [M]; cols2.forEach(function (c, i) { xs2.push(xs2[i] + c); });
         z.fillStyle = CA + "26"; z.fillRect(xs2[0], ty, xs2[5] - xs2[0], HH); z.fillStyle = CB + "26"; z.fillRect(xs2[5], ty, xs2[10] - xs2[5], HH); z.fillStyle = "#e9eef3"; z.fillRect(xs2[10], ty, xs2[12] - xs2[10], HH);
         z.font = "800 16px " + FN; z.textAlign = "center"; z.fillStyle = CA; z.fillText(l1, (xs2[0] + xs2[5]) / 2, ty + HH / 2); z.fillStyle = CB; z.fillText(l2, (xs2[5] + xs2[10]) / 2, ty + HH / 2); z.fillStyle = TX; z.fillText("DIFERENÇA (" + l1.toLowerCase() + " − " + l2.toLowerCase() + ")", (xs2[10] + xs2[12]) / 2, ty + HH / 2);
@@ -523,14 +569,14 @@
         var rows = D.rows.slice(pg * perPage, (pg + 1) * perPage), y0 = ty2 + HH;
         rows.forEach(function (r, k) {
           var yy = y0 + k * RH, mid = yy + RH / 2; if (k % 2) { z.fillStyle = "#f6f8fa"; z.fillRect(M, yy, W - 2 * M, RH); }
-          function side(c, o) { z.textAlign = "center"; z.fillStyle = TX; z.font = "500 16px " + FN; if (!c) { z.fillStyle = MT; z.fillText("— não encontrado nesta curva —", (xs2[o] + xs2[o + 5]) / 2, mid); return; } [c.tipo + " " + c.n, c.pos.toFixed(3), f2c(c.perda, 2), f2c(c.refl, 1), f2c(c.att, 3)].forEach(function (t, i) { z.fillText(t, (xs2[o + i] + xs2[o + i + 1]) / 2, mid); }); }
+          function side(c, o) { z.textAlign = "center"; z.fillStyle = TX; z.font = "500 16px " + FN; if (!c) { z.fillStyle = MT; z.fillText("— não encontrado nesta curva —", (xs2[o] + xs2[o + 5]) / 2, mid); return; } var hi = c.perda != null && c.perda > HI; if (hi) { z.fillStyle = "#fef3c7"; z.fillRect(xs2[o], yy, xs2[o + 5] - xs2[o], RH); z.fillStyle = "#d97706"; z.fillRect(xs2[o] + 2, yy, 4, RH); } [c.tipo + " " + c.n, c.pos.toFixed(3), f2c(c.perda, 2) + (hi ? " ▲" : ""), f2c(c.refl, 1), f2c(c.att, 3)].forEach(function (t, i) { z.fillStyle = i === 2 && hi ? "#b45309" : TX; z.font = (i === 2 && hi ? "800 " : "500 ") + "16px " + FN; z.fillText(t, (xs2[o + i] + xs2[o + i + 1]) / 2, mid); }); }
           side(r.a, 0); side(r.b, 5);
           var big = r.dp != null && Math.abs(r.dp) >= 0.15; z.textAlign = "center"; z.font = "800 16px " + FN; z.fillStyle = big ? "#b45309" : TX; z.fillText(sg2(r.dp, 2), (xs2[10] + xs2[11]) / 2, mid); z.font = "500 16px " + FN; z.fillStyle = TX; z.fillText(sg2(r.dx, 0), (xs2[11] + xs2[12]) / 2, mid);
         });
         var yEnd = y0 + rows.length * RH;
         [[0, CA], [5, CB], [10, BD]].forEach(function (c) { z.strokeStyle = c[1]; z.lineWidth = 2; z.beginPath(); z.moveTo(xs2[c[0]], ty); z.lineTo(xs2[c[0]], yEnd); z.stroke(); });
         z.strokeStyle = BD; z.lineWidth = 1; z.beginPath(); z.moveTo(M, yEnd); z.lineTo(W - M, yEnd); z.stroke();
-        z.textAlign = "left"; z.fillStyle = MT; z.font = "500 13px " + FN; z.fillText("Eventos pareados pela posição (tolerância " + (D.tol * 1000).toFixed(0) + " m). Δ = " + l1.toLowerCase() + " − " + l2.toLowerCase() + "; diferenças de perda ≥ 0,15 dB em destaque. Análise de apoio — a interpretação final é do analista.", M, H - 22);
+        z.textAlign = "left"; z.fillStyle = MT; z.font = "500 13px " + FN; z.fillText("Eventos pareados pela posição (tolerância " + (D.tol * 1000).toFixed(0) + " m). Δ = " + l1.toLowerCase() + " − " + l2.toLowerCase() + "; Δ ≥ 0,15 dB em destaque; perdas acima de 0,30 dB marcadas (▲). Análise de apoio — a interpretação final é do analista.", M, H - 22);
         out.push(sl.cv);
       }
       return out;
