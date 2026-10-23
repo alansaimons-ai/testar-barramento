@@ -553,8 +553,8 @@
         return pgs;
       }
       var pA = paginate(blocksFor(CA, l1, na, P, A)), pB = paginate(blocksFor(CB, l2, nb, C, B));
-      total = Math.max(pA.length, pB.length);
-      for (var fp = 0; fp < total; fp++) {
+      var nCol = Math.max(pA.length, pB.length); total = nCol + 1;
+      for (var fp = 0; fp < nCol; fp++) {
         var sf = mk(); x = sf.x; head(x, fp + 1);
         (pA[fp] || []).forEach(function (it) { it.d(M, it.y); });
         (pB[fp] || []).forEach(function (it) { it.d(M + cw + 40, it.y); });
@@ -565,6 +565,74 @@
         x.textAlign = "right"; x.fillText("TESTAR BARRAMENTO · Validação de Campo — Rede DWDM", W - M, H - 17);
         out.push(sf.cv);
       }
+      /* ---- página final: curvas ilustrativas com os piores eventos de cada fibra ---- */
+      var sc = mk(); x = sc.x; head(x, total);
+      function footer() { x.fillStyle = TEAL; x.fillRect(0, H - 34, W, 34); x.fillStyle = "#ffffff"; x.font = "600 13px " + FN; x.textAlign = "left"; x.fillText("Ilustração das curvas (nível relativo ao início de cada fibra). Marcados: os 3 piores eventos de cada fibra. Análise de apoio — a interpretação final é do analista.", M, H - 17); x.textAlign = "right"; x.fillText("TESTAR BARRAMENTO · Validação de Campo — Rede DWDM", W - M, H - 17); }
+      x.textAlign = "left"; x.fillStyle = TX; x.font = "800 22px " + FN; x.fillText("CURVAS — VISÃO ILUSTRATIVA", M, 136);
+      [[CA, l1 + " · " + na], [CB, l2 + " · " + nb]].forEach(function (lg, i) { var lx = M + 420 + i * 560; x.fillStyle = lg[0]; x.fillRect(lx, 132, 46, 6); x.fillStyle = TX; x.font = "700 16px " + FN; x.fillText(fit(x, lg[1], 480), lx + 58, 136); });
+      function worst(PP) { return PP.events.map(function (e, k) { return { e: e, k: k }; }).filter(function (o) { return !o.e.fim_de_fibra && o.e.perda > 0; }).sort(function (a, b) { return b.e.perda - a.e.perda; }); }
+      var wA = worst(P), wB = worst(C);
+      var g = { l: M + 70, t: 170, w: 1340, h: 790 };
+      function lenOf(PP) { var ev = PP.events; return ev.length ? ev[ev.length - 1].dist : PP.trace.n * PP.trace.dx; }
+      var Lmax = Math.max(lenOf(P), lenOf(C)) * 1.04 || 1;
+      function rng(PP) { var tr = PP.trace, L = lenOf(PP), i0 = Math.floor(L * 0.01 / tr.dx), i1 = Math.min(tr.n - 1, Math.floor(L * 0.985 / tr.dx)), lo = 1e9, hi = -1e9; for (var i = i0; i <= i1; i++) { var v = tr.y[i]; if (v < lo) lo = v; if (v > hi) hi = v; } return [lo, hi]; }
+      var ra = rng(P), rb = rng(C), ylo = Math.min(ra[0], rb[0]), yhi = Math.max(ra[1], rb[1]), pad = Math.max(1, (yhi - ylo) * 0.12); ylo -= pad; yhi += pad * 1.6;
+      function cx(v) { return g.l + v / Lmax * g.w; } function cy(v) { return g.t + (1 - (v - ylo) / (yhi - ylo)) * g.h; }
+      x.fillStyle = "#f8fafc"; x.fillRect(g.l, g.t, g.w, g.h); x.strokeStyle = BD; x.lineWidth = 1; x.strokeRect(g.l, g.t, g.w, g.h);
+      var tX = ticks(0, Lmax, 10), tY = ticks(ylo, yhi, 8);
+      x.font = "500 14px " + FN; x.fillStyle = MT;
+      tX.v.forEach(function (v) { var X = cx(v); x.strokeStyle = "#e2e8f0"; x.beginPath(); x.moveTo(X, g.t); x.lineTo(X, g.t + g.h); x.stroke(); x.textAlign = "center"; x.fillText(+v.toFixed(3) + "", X, g.t + g.h + 20); });
+      tY.v.forEach(function (v) { var Y = cy(v); x.strokeStyle = "#e2e8f0"; x.beginPath(); x.moveTo(g.l, Y); x.lineTo(g.l + g.w, Y); x.stroke(); x.textAlign = "right"; x.fillText(+v.toFixed(2) + "", g.l - 10, Y); });
+      x.textAlign = "center"; x.fillText("distância (km)", g.l + g.w / 2, g.t + g.h + 44); x.save(); x.translate(M + 14, g.t + g.h / 2); x.rotate(-Math.PI / 2); x.fillText("nível (dB)", 0, 0); x.restore();
+      function trace(PP, col) {
+        var tr = PP.trace, L = Math.min(lenOf(PP) * 1.01, Lmax), i1 = Math.min(tr.n - 1, Math.floor(L / tr.dx)), ncol = Math.max(1, Math.floor(cx(L) - g.l)), per = (i1 + 1) / ncol;
+        x.save(); x.beginPath(); x.rect(g.l, g.t, g.w, g.h); x.clip(); x.beginPath(); x.strokeStyle = col; x.lineWidth = 3; x.lineJoin = "round"; x.lineCap = "round";
+        if (per <= 1.5) { for (var i = 0; i <= i1; i++) { var X = cx(i * tr.dx), Y = cy(tr.y[i]); i ? x.lineTo(X, Y) : x.moveTo(X, Y); } }
+        else { for (var c = 0; c < ncol; c++) { var a = Math.floor(c * per), b = Math.min(i1, Math.floor((c + 1) * per)), lo = 1e9, hi = -1e9; for (var k = a; k <= b; k++) { var v = tr.y[k]; if (v < lo) lo = v; if (v > hi) hi = v; } var X2 = g.l + c + 0.5; c ? x.lineTo(X2, cy(hi)) : x.moveTo(X2, cy(hi)); x.lineTo(X2, cy(lo)); } }
+        x.stroke(); x.restore();
+      }
+      trace(C, CB); trace(P, CA);
+      /* marcações dos piores eventos */
+      var tags = [];
+      [[wA.slice(0, 3), P, CA, "F1"], [wB.slice(0, 3), C, CB, "F2"]].forEach(function (grp, gi) {
+        grp[0].forEach(function (o, r) {
+          var e = o.e, X = cx(e.dist), tr = grp[1].trace, Y = cy(tr.y[Math.max(0, Math.min(tr.n - 1, Math.round(e.dist / tr.dx)))]);
+          var hc = e.perda > MELH ? "#dc2626" : e.perda > HI ? "#d97706" : grp[2];
+          x.save(); x.beginPath(); x.rect(g.l, g.t, g.w, g.h); x.clip();
+          x.strokeStyle = hc; x.lineWidth = 2; x.setLineDash([6, 5]); x.beginPath(); x.moveTo(X, g.t + 6); x.lineTo(X, g.t + g.h); x.stroke(); x.setLineDash([]);
+          x.fillStyle = "#ffffff"; x.beginPath(); x.arc(X, Y, 11, 0, 6.2832); x.fill(); x.strokeStyle = hc; x.lineWidth = 4; x.stroke(); x.fillStyle = grp[2]; x.beginPath(); x.arc(X, Y, 4.5, 0, 6.2832); x.fill(); x.restore();
+          tags.push({ X: X, txt: (gi ? l2 : l1).replace("FIBRA ", "F") + " · ev " + e.n + " · " + e.perda.toFixed(2).replace(".", ",") + " dB", sub: e.dist.toFixed(3).replace(".", ",") + " km", col: grp[2], hc: hc });
+        });
+      });
+      /* etiquetas em faixas para não sobrepor */
+      tags.sort(function (a, b) { return a.X - b.X; });
+      var lanes = []; x.font = "800 15px " + FN;
+      tags.forEach(function (t) {
+        var w = Math.max(x.measureText(t.txt).width, 90) + 22, lx = Math.min(Math.max(t.X - w / 2, g.l + 4), g.l + g.w - w - 4), ln = 0;
+        while (lanes[ln] != null && lanes[ln] > lx - 8) ln++; lanes[ln] = lx + w;
+        var ly = g.t + 12 + ln * 56;
+        x.fillStyle = "#ffffff"; rr(x, lx, ly, w, 46, 8); x.fill(); x.lineWidth = 2.5; x.strokeStyle = t.hc; rr(x, lx, ly, w, 46, 8); x.stroke(); x.fillStyle = t.col; x.fillRect(lx, ly + 8, 5, 30);
+        x.textAlign = "left"; x.fillStyle = TX; x.font = "800 15px " + FN; x.fillText(t.txt, lx + 12, ly + 16); x.fillStyle = MT; x.font = "600 13px " + FN; x.fillText(t.sub, lx + 12, ly + 34); x.font = "800 15px " + FN;
+      });
+      /* painel: piores eventos */
+      var px = g.l + g.w + 40, pw = W - M - px, py = 170;
+      [[wA, CA, l1, na, P], [wB, CB, l2, nb, C]].forEach(function (grp, gi) {
+        var y0 = py + gi * 410, mh = melhoria(grp[4]);
+        x.fillStyle = grp[1]; x.fillRect(px, y0, pw, 40); x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "800 16px " + FN; x.fillText(fit(x, grp[2] + " · " + grp[3], pw - 20), px + 12, y0 + 21);
+        x.fillStyle = TX; x.font = "800 13px " + FN; x.fillText("PIORES EVENTOS", px, y0 + 62);
+        var top = grp[0].slice(0, 6);
+        if (!top.length) { x.fillStyle = MT; x.font = "500 14px " + FN; x.fillText("Sem eventos com perda.", px, y0 + 90); }
+        top.forEach(function (o, r) {
+          var e = o.e, yy = y0 + 76 + r * 40, hc = e.perda > MELH ? "#dc2626" : e.perda > HI ? "#d97706" : MT;
+          x.fillStyle = e.perda > MELH ? "#fee2e2" : e.perda > HI ? "#fef3c7" : "#f1f5f9"; x.fillRect(px, yy, pw, 34); x.fillStyle = hc; x.fillRect(px, yy, 5, 34);
+          x.textAlign = "left"; x.fillStyle = TX; x.font = "700 15px " + FN; x.fillText((r + 1) + ".  ev " + e.n + " · " + tipoCurto(e), px + 14, yy + 17);
+          x.textAlign = "right"; x.fillStyle = MT; x.font = "500 14px " + FN; x.fillText(e.dist.toFixed(3) + " km", px + pw - 96, yy + 17); x.fillStyle = hc; x.font = "800 16px " + FN; x.fillText(e.perda.toFixed(2) + (e.perda > HI ? " ▲" : ""), px + pw - 12, yy + 17);
+        });
+        var yb = y0 + 76 + 6 * 40 + 8, ok = mh.n === 0; x.fillStyle = ok ? "#dcfce7" : "#fee2e2"; x.fillRect(px, yb, pw, 44); x.fillStyle = ok ? "#16a34a" : "#dc2626"; x.fillRect(px, yb, 5, 44);
+        x.textAlign = "left"; x.font = "800 14px " + FN; x.fillText("MELHORIA: " + mh.soma.toFixed(2) + " dB", px + 14, yb + 16); x.fillStyle = TX; x.font = "500 13px " + FN; x.fillText(ok ? "nenhum evento acima de 0,50 dB" : mh.n + " evento(s) acima de 0,50 dB", px + 14, yb + 33);
+      });
+      footer();
+      out.push(sc.cv);
       return out;
     }
     function cmpText() {
