@@ -405,7 +405,7 @@
       }
       /* gráfico */
       h += '<div class="sv-card"><div class="sv-lb">Curva (nível relativo ao início da fibra)</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><button class="sv-btn" id="sv-zi">＋ Zoom</button><button class="sv-btn" id="sv-zo">－ Zoom</button><button class="sv-btn" id="sv-zr">Fibra</button><button class="sv-btn" id="sv-zf">Tudo (com ruído)</button><button class="sv-btn" id="sv-ccl">Limpar cursores</button><button class="sv-btn" id="sv-png">⬇ PNG</button><button class="sv-btn" id="sv-csvt">⬇ Curva CSV</button></div>' +
-        "" + (S.cmpP ? '<div class="sv-ro" style="margin:0 0 8px"><span style="color:#0ea5e9"><b>━</b> ' + esc(it.name) + '</span><span style="color:#a78bfa"><b>┅</b> ' + esc(S.cmpName) + "</span></div>" : "") + '<div class="sv-cv"><canvas id="sv-cv"></canvas></div><div class="sv-ro" id="sv-ro"></div><div class="sv-note">Roda do mouse = zoom · arrastar = mover · clique = posiciona cursor A, depois B · duplo clique = voltar à fibra. Meça perda e atenuação entre A e B.</div></div>';
+        "" + (S.cmpP ? '<div class="sv-ro" style="margin:0 0 8px"><span style="color:#2563eb"><b>━━</b> ' + esc(it.name) + '</span><span style="color:#16a34a"><b>━━</b> ' + esc(S.cmpName) + "</span></div>" : "") + '<div class="sv-cv"><canvas id="sv-cv"></canvas></div><div class="sv-ro" id="sv-ro"></div><div class="sv-note">Roda do mouse = zoom · arrastar = mover · clique = posiciona cursor A, depois B · duplo clique = voltar à fibra. Meça perda e atenuação entre A e B.</div></div>';
       /* eventos */
       var bi = null;
       if (items.length > 1) { var o = items[S.i === 0 ? 1 : 0]; if (o.P.ok && !S.cmpP) bi = bidir(P, o.P); }
@@ -450,7 +450,7 @@
     function f2c(v, d) { return v == null ? "—" : v.toFixed(d); }
     function sg2(v, d) { return v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(d); }
     function cmpCard() {
-      var D = cmpData(), A = cur().A, na = cur().name, nb = S.cmpName, CA = "#0ea5e9", CB = "#a78bfa";
+      var D = cmpData(), A = cur().A, na = cur().name, nb = S.cmpName, CA = "#2563eb", CB = "#16a34a";
       function side(c, col) { return c ? "<td style='border-left:2px solid " + col + "'>" + c.tipo + " " + c.n + "</td><td>" + c.pos.toFixed(3) + "</td><td" + (c.perda != null && c.perda > 0.30 ? " style='background:rgba(245,158,11,.18);color:#d97706;font-weight:800'" : "") + ">" + f2c(c.perda, 2) + (c.perda != null && c.perda > 0.30 ? " ▲" : "") + "</td><td>" + f2c(c.refl, 1) + "</td><td>" + f2c(c.att, 3) + "</td>" : "<td colspan='5' style='border-left:2px solid " + col + ";color:var(--mt);text-align:center'>— não encontrado nesta curva —</td>"; }
       var h = '<div class="sv-card"><div class="sv-lb">Tabela de eventos — lado a lado</div><div class="sv-tbw"><table class="sv-tb"><thead><tr><th style="border-bottom:3px solid ' + CA + ';color:' + CA + '" colspan="5">' + lbl1() + ' · ' + esc(na) + '</th><th style="border-bottom:3px solid ' + CB + ';color:' + CB + ';border-left:2px solid ' + CB + '" colspan="5">' + lbl2() + ' · ' + esc(nb) + '</th><th colspan="2" style="border-left:2px solid var(--bd)">DIFERENÇA</th></tr>' +
         '<tr><th style="border-left:2px solid ' + CA + '">Evento</th><th>Pos. (km)</th><th>Perda (dB)</th><th>Refl. (dB)</th><th>Atenuação (dB/km)</th><th style="border-left:2px solid ' + CB + '">Evento</th><th>Pos. (km)</th><th>Perda (dB)</th><th>Refl. (dB)</th><th>Atenuação (dB/km)</th><th style="border-left:2px solid var(--bd)">Δ perda (dB)</th><th>Δ pos. (m)</th></tr></thead><tbody>' +
@@ -459,7 +459,7 @@
           return "<tr" + (r.ai >= 0 ? ' class="ev" data-ev="' + r.ai + '"' : "") + ">" + side(r.a, CA) + side(r.b, CB) + "<td style='border-left:2px solid var(--bd);font-weight:700;color:" + c + "'>" + sg2(r.dp, 2) + "</td><td>" + sg2(r.dx, 0) + "</td></tr>";
         }).join("") + "</tbody></table></div>" +
         '<div class="sv-note">Δ = ' + lbl1().toLowerCase() + ' − ' + lbl2().toLowerCase() + '. Eventos pareados pela posição (tolerância ' + (D.tol * 1000).toFixed(0) + ' m). Diferenças de perda ≥ 0,15 dB ficam em amarelo; perdas acima de 0,30 dB marcadas com ▲.</div>' +
-        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="sv-btn on" id="sv-shc">📤 Compartilhar relatório (16:9)</button><button class="sv-btn" id="sv-pptc">⬇ PowerPoint (.pptx)</button><button class="sv-btn" id="sv-pngc">⬇ PNG 16:9</button><button class="sv-btn" id="sv-csvc">⬇ CSV lado a lado</button><button class="sv-btn" id="sv-csve">⬇ Eventos CSV (atual)</button></div><div class="sv-note" id="sv-shm"></div></div>';
+        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="sv-btn on" id="sv-shc">📤 Compartilhar relatório (PDF)</button><button class="sv-btn" id="sv-pptc">⬇ PowerPoint (.pptx)</button><button class="sv-btn" id="sv-pdfc">⬇ PDF</button><button class="sv-btn" id="sv-pngc">⬇ PNG 16:9</button><button class="sv-btn" id="sv-csvc">⬇ CSV lado a lado</button><button class="sv-btn" id="sv-csve">⬇ Eventos CSV (atual)</button></div><div class="sv-note" id="sv-shm"></div></div>';
       return h;
     }
     function lbl1() { return S.cmpSel && String(S.cmpSel).indexOf("i:") === 0 ? "FIBRA " + (S.i + 1) : "ATUAL"; }
@@ -572,6 +572,30 @@
       D.rows.forEach(function (r) { t += (r.a ? r.a.pos : r.b.pos).toFixed(3) + " | " + (r.a ? f2c(r.a.perda, 2) : "—") + " | " + (r.b ? f2c(r.b.perda, 2) : "—") + " | " + sg2(r.dp, 2) + "\n"; });
       return t;
     }
+    /* PDF mínimo: uma página 16:9 por slide (imagem JPEG) — formato aceito no compartilhar dos celulares */
+    function makePdf(cvs) {
+      var enc = new TextEncoder(), parts = [], len = 0, offs = [];
+      function put(x) { var b = typeof x === "string" ? enc.encode(x) : x; parts.push(b); len += b.length; }
+      function obj(n, body) { offs[n] = len; put(n + " 0 obj\n"); body(); put("\nendobj\n"); }
+      var n = cvs.length, pw = 960, ph = 540; /* 13,33 x 7,5 pol */
+      put("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+      var kids = []; for (var i = 0; i < n; i++) kids.push((3 + i * 3) + " 0 R");
+      obj(1, function () { put("<< /Type /Catalog /Pages 2 0 R >>"); });
+      obj(2, function () { put("<< /Type /Pages /Count " + n + " /Kids [" + kids.join(" ") + "] >>"); });
+      cvs.forEach(function (c, i) {
+        var pg = 3 + i * 3, ct = pg + 1, im = pg + 2;
+        var b64 = c.toDataURL("image/jpeg", 0.93).split(",")[1], bin = atob(b64), jb = new Uint8Array(bin.length);
+        for (var k = 0; k < bin.length; k++) jb[k] = bin.charCodeAt(k);
+        var cs = "q " + pw + " 0 0 " + ph + " 0 0 cm /Im0 Do Q";
+        obj(pg, function () { put("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pw + " " + ph + "] /Resources << /XObject << /Im0 " + im + " 0 R >> >> /Contents " + ct + " 0 R >>"); });
+        obj(ct, function () { put("<< /Length " + cs.length + " >>\nstream\n" + cs + "\nendstream"); });
+        obj(im, function () { put("<< /Type /XObject /Subtype /Image /Width " + c.width + " /Height " + c.height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + jb.length + " >>\nstream\n"); put(jb); put("\nendstream"); });
+      });
+      var nObj = 3 + n * 3, xref = len, t = "xref\n0 " + nObj + "\n0000000000 65535 f \n";
+      for (var q = 1; q < nObj; q++) t += ("0000000000" + offs[q]).slice(-10) + " 00000 n \n";
+      put(t + "trailer\n<< /Size " + nObj + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF");
+      return new Blob(parts, { type: "application/pdf" });
+    }
     var LOGO_URL = "https://vtal.com/wp-content/uploads/2025/02/logo-vtal-footer.png", logoP = null;
     function loadLogo() { if (logoP) return logoP; logoP = new Promise(function (ok) { var im = new Image(), done = false; im.crossOrigin = "anonymous"; im.onload = function () { if (done) return; done = true; try { var t = document.createElement("canvas"); t.width = 2; t.height = 2; var c = t.getContext("2d"); c.drawImage(im, 0, 0, 2, 2); t.toDataURL(); ok(im); } catch (e) { ok(null); } }; im.onerror = function () { if (!done) { done = true; ok(null); } }; setTimeout(function () { if (!done) { done = true; ok(null); } }, 2500); im.src = LOGO_URL; }); return logoP; }
     function exportCmp(mode) {
@@ -583,6 +607,14 @@
       var cvs; try { cvs = slidesCmp(logo); } catch (e) { say("Erro ao gerar slides: " + (e && e.message || e)); return; }
       var base = "relatorio_curvas_" + cur().name.replace(/\.sor$/i, "") + "_x_" + S.cmpName.replace(/\.sor$/i, "");
       function save(bl, nome) { var a = document.createElement("a"), u = URL.createObjectURL(bl); a.href = u; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); }
+      if (mode === "share" || mode === "pdf") {
+        var pdf; try { pdf = makePdf(cvs); } catch (e) { say("Erro ao gerar PDF: " + (e && e.message || e)); return; }
+        var pf = null; try { pf = new File([pdf], base + ".pdf", { type: "application/pdf" }); } catch (e) { }
+        if (mode === "share" && pf && navigator.share && navigator.canShare && navigator.canShare({ files: [pf] })) {
+          navigator.share({ files: [pf], title: "Relatório de curvas OTDR — TESTAR BARRAMENTO", text: "Relatório de curvas OTDR (" + cvs.length + " página(s))" }).then(function () { say("Relatório compartilhado em PDF (" + cvs.length + " página(s))."); }).catch(function (e) { if (e && e.name !== "AbortError") { save(pdf, base + ".pdf"); say("PDF baixado (" + cvs.length + " página(s))."); } });
+        } else { save(pdf, base + ".pdf"); say((mode === "share" ? "Seu navegador não compartilha arquivos daqui; o " : "") + "PDF com " + cvs.length + " página(s) 16:9 foi baixado."); }
+        return;
+      }
       if (mode === "pptx") {
         if (!window.PptxGenJS) { say("Biblioteca de PowerPoint não carregada."); return; }
         try {
@@ -628,7 +660,7 @@
     function drawTrace(ctx, tr, g, x0, x1, y0, y1, col, w, dash) {
       var px0 = g.l, pw = g.w, cx = function (x) { return g.l + (x - x0) / (x1 - x0) * g.w; }, cy = function (y) { return g.t + (1 - (y - y0) / (y1 - y0)) * g.h; };
       var i0 = Math.max(0, Math.floor(x0 / tr.dx)), i1 = Math.min(tr.n - 1, Math.ceil(x1 / tr.dx));
-      ctx.beginPath(); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []);
+      ctx.beginPath(); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.setLineDash(dash || []);
       var per = (i1 - i0 + 1) / pw;
       if (per <= 1.5) { for (var i = i0; i <= i1; i++) { var X = cx(i * tr.dx), Y = cy(tr.y[i]); i === i0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y); } }
       else {
@@ -636,7 +668,7 @@
           var a = i0 + Math.floor(c * per), b = Math.min(i1, i0 + Math.floor((c + 1) * per)), lo = 1e9, hi = -1e9, last = 0;
           if (a > i1) break;
           for (var k = a; k <= b; k++) { var v = tr.y[k]; if (v < lo) lo = v; if (v > hi) hi = v; }
-          var X2 = px0 + c + 0.5; ctx.moveTo(X2, cy(hi)); ctx.lineTo(X2, cy(lo));
+          var X2 = px0 + c + 0.5; if (c === 0) ctx.moveTo(X2, cy(hi)); else ctx.lineTo(X2, cy(hi)); ctx.lineTo(X2, cy(lo));
         }
       }
       ctx.stroke(); ctx.setLineDash([]);
@@ -660,8 +692,8 @@
       ctx.save(); ctx.beginPath(); ctx.rect(g.l, g.t, g.w, g.h); ctx.clip();
       /* trechos com problema */
       A.secoes.forEach(function (s) { if (s.sev === "ok") return; ctx.fillStyle = COR[s.sev] + "22"; ctx.fillRect(cx(s.x0), g.t, cx(s.x1) - cx(s.x0), g.h); });
-      if (S.showCmp && S.cmpP) drawTrace(ctx, S.cmpP.trace, g, v.x0, v.x1, yr.y0, yr.y1, "#a78bfa", 1.2, [5, 3]);
-      drawTrace(ctx, P.trace, g, v.x0, v.x1, yr.y0, yr.y1, "#0ea5e9", 1.4);
+      if (S.showCmp && S.cmpP) drawTrace(ctx, S.cmpP.trace, g, v.x0, v.x1, yr.y0, yr.y1, "#16a34a", 2.4);
+      drawTrace(ctx, P.trace, g, v.x0, v.x1, yr.y0, yr.y1, "#2563eb", 2.4);
       /* eventos */
       ctx.font = "bold 10px Inter,system-ui,sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
       P.events.forEach(function (e, k) {
@@ -671,7 +703,7 @@
         ctx.fillStyle = c; ctx.fillRect(X - 8, g.t, 16, 13); ctx.fillStyle = "#fff"; ctx.fillText(String(e.n), X, g.t + 2);
       });
       /* cursores */
-      [["a", S.ca, "#22c55e"], ["b", S.cb, "#f97316"]].forEach(function (c) {
+      [["a", S.ca, "#f97316"], ["b", S.cb, "#db2777"]].forEach(function (c) {
         if (c[1] == null) return; var X = cx(c[1]); ctx.strokeStyle = c[2]; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X, g.t); ctx.lineTo(X, g.t + g.h); ctx.stroke();
         ctx.fillStyle = c[2]; ctx.fillRect(X - 7, g.t + g.h - 14, 14, 14); ctx.fillStyle = "#fff"; ctx.fillText(c[0].toUpperCase(), X, g.t + g.h - 12);
       });
@@ -685,16 +717,16 @@
       function sg(v) { return (v > 0 ? "+" : "") + v.toFixed(2); }
       function pt(lbl, x, col) {
         var y1 = yAt(P, x), t = '<span' + (col ? ' style="color:' + col + '"' : "") + ">" + lbl + x.toFixed(3) + " km · " + (C ? "atual " : "") + y1.toFixed(2) + " dB";
-        if (C) { var y2 = yAt(C, x); t += ' · <span style="color:#a78bfa">comparada ' + y2.toFixed(2) + " dB</span> · Δ " + sg(y1 - y2) + " dB"; }
+        if (C) { var y2 = yAt(C, x); t += ' · <span style="color:#16a34a">comparada ' + y2.toFixed(2) + " dB</span> · Δ " + sg(y1 - y2) + " dB"; }
         return t + "</span>";
       }
       if (S.hover != null) h += pt("Cursor: ", S.hover);
-      if (S.ca != null) h += pt("A: ", S.ca, "#22c55e");
-      if (S.cb != null) h += pt("B: ", S.cb, "#f97316");
+      if (S.ca != null) h += pt("A: ", S.ca, "#f97316");
+      if (S.cb != null) h += pt("B: ", S.cb, "#db2777");
       if (S.ca != null && S.cb != null) {
         var d = Math.abs(S.cb - S.ca), sgn = S.cb < S.ca ? -1 : 1, L = sgn * (yAt(P, S.ca) - yAt(P, S.cb));
         h += "<span><b>A↔B: " + d.toFixed(3) + " km · perda " + (C ? "atual " : "") + L.toFixed(2) + " dB" + (d > 0 ? " · " + (L / d).toFixed(3) + " dB/km" : "") + "</b></span>";
-        if (C) { var L2 = sgn * (yAt(C, S.ca) - yAt(C, S.cb)); h += '<span style="color:#a78bfa"><b>comparada ' + L2.toFixed(2) + " dB" + (d > 0 ? " · " + (L2 / d).toFixed(3) + " dB/km" : "") + "</b></span><span><b>Δ perda (atual − comparada): " + sg(L - L2) + " dB" + (d > 0 ? " · " + sg((L - L2) / d) + " dB/km" : "") + "</b></span>"; }
+        if (C) { var L2 = sgn * (yAt(C, S.ca) - yAt(C, S.cb)); h += '<span style="color:#16a34a"><b>comparada ' + L2.toFixed(2) + " dB" + (d > 0 ? " · " + (L2 / d).toFixed(3) + " dB/km" : "") + "</b></span><span><b>Δ perda (atual − comparada): " + sg(L - L2) + " dB" + (d > 0 ? " · " + sg((L - L2) / d) + " dB/km" : "") + "</b></span>"; }
       }
       ro.innerHTML = h;
     }
@@ -730,18 +762,18 @@
         var k = sel.value; if (k === "") { S.cmpP = null; S.cmpRes = null; S.cmpSel = null; S.cmpMsg = ""; render(); return; }
         if (k.indexOf("i:") === 0) {
           var o = items[+k.slice(2)]; S.cmpSel = k; S.cmpP = o.P; S.cmpA = o.A || analyze(o.P, {}); S.cmpName = o.name; S.cmpRes = compare(cur().P, o.P, { neutral: true });
-          S.cmpMsg = cur().name + " (azul) × " + o.name + " (tracejado roxo). Passe o mouse ou use os cursores A/B para ler as duas curvas no mesmo ponto."; render(); return;
+          S.cmpMsg = cur().name + " (linha azul) × " + o.name + " (linha verde). Passe o mouse ou use os cursores A/B para ler as duas curvas no mesmo ponto."; render(); return;
         }
         S.cmpSel = k; S.cmpMsg = "Carregando curva anterior..."; render();
         cfg.others[+k.slice(2)].load().then(function (list) {
           var cands = (list || []).map(function (x) { return { name: x.name, P: parse(x.buf) }; }).filter(function (x) { return x.P.ok; });
           if (!cands.length) { S.cmpP = null; S.cmpRes = null; S.cmpMsg = "Esse teste não tem curva .SOR legível."; render(); return; }
           var pick = cands.filter(function (x) { return x.name === cur().name; })[0] || cands[Math.min(S.i, cands.length - 1)];
-          S.cmpP = pick.P; S.cmpA = analyze(pick.P, {}); S.cmpName = pick.name; S.cmpRes = compare(cur().P, pick.P); S.cmpMsg = "Comparando com " + pick.name + " (tracejado roxo). Passe o mouse ou use os cursores A/B para ler as duas curvas no mesmo ponto."; render();
+          S.cmpP = pick.P; S.cmpA = analyze(pick.P, {}); S.cmpName = pick.name; S.cmpRes = compare(cur().P, pick.P); S.cmpMsg = "Comparando com " + pick.name + " (linha verde). Passe o mouse ou use os cursores A/B para ler as duas curvas no mesmo ponto."; render();
         }).catch(function (e) { S.cmpP = null; S.cmpRes = null; S.cmpMsg = "Erro ao carregar: " + (e && e.message || e); render(); });
       };
       var b1 = $("sv-shc"); if (b1) b1.onclick = function () { exportCmp("share"); };
-      var b2 = $("sv-pngc"); if (b2) b2.onclick = function () { exportCmp("png"); }; var b4 = $("sv-pptc"); if (b4) b4.onclick = function () { exportCmp("pptx"); };
+      var b2 = $("sv-pngc"); if (b2) b2.onclick = function () { exportCmp("png"); }; var b4 = $("sv-pptc"); if (b4) b4.onclick = function () { exportCmp("pptx"); }; var b5 = $("sv-pdfc"); if (b5) b5.onclick = function () { exportCmp("pdf"); };
       var b3 = $("sv-csvc"); if (b3) b3.onclick = csvCmp;
       var ct = $("sv-cmpt"); if (ct) ct.onclick = function () { S.showCmp = !S.showCmp; render(); };
       var cv = $("sv-cv"), moved = 0;
