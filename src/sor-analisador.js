@@ -298,7 +298,8 @@
 
   function open(cfg) {
     if (!document.getElementById(CSS_ID)) { var s = document.createElement("style"); s.id = CSS_ID; s.textContent = CSS; document.head.appendChild(s); }
-    var items = (cfg.items || []).map(function (it) { var P = parse(it.buf); return { name: it.name, P: P, A: P.ok ? analyze(P, { refKm: cfg.refKm }) : null }; });
+    function mkItem(name, buf) { var P = parse(buf); return { name: name, P: P, A: P.ok ? analyze(P, { refKm: cfg.refKm }) : null }; }
+    var items = (cfg.items || []).map(function (it) { return mkItem(it.name, it.buf); });
     var root = document.createElement("div"); root.className = "sv"; document.body.appendChild(root);
     var prevOverflow = document.body.style.overflow; document.body.style.overflow = "hidden";
     var S = { i: 0, view: null, ca: null, cb: null, next: "a", cmp: null, cmpP: null, cmpName: "", cmpRes: null, hover: null, selEv: null, showCmp: true, drag: null, cmpMsg: "" };
@@ -309,15 +310,57 @@
 
     function cur() { return items[S.i]; }
     function fit(full) {
-      var it = cur(); if (!it.P.ok) return;
+      var it = cur(); if (!it || !it.P.ok) return;
       var tr = it.P.trace, L = tr.n * tr.dx, ev = it.P.events, ln = ev.length ? ev[ev.length - 1].dist : L;
       S.view = { x0: 0, x1: full || !(ln > 0) ? L : Math.min(L, Math.max(ln * 1.12, ln + 0.3)) }; S.selEv = null; S.ca = S.cb = null; S.next = "a";
     }
+    /* ----- arquivos locais (modo avulso: sem vínculo com testes) ----- */
+    function pick(lbl, id, cls) { return '<label class="sv-btn ' + (cls || "") + '" style="display:inline-block">' + lbl + '<input type="file" id="' + id + '" multiple accept=".sor,.zip,application/zip" style="display:none"></label>'; }
+    function readBuf(f) { return new Promise(function (ok, no) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.onerror = function () { no(new Error("Falha ao ler " + f.name)); }; r.readAsArrayBuffer(f); }); }
+    async function addFiles(list) {
+      var files = Array.prototype.slice.call(list || []), add = [], skip = [], first = !items.length;
+      if (!files.length) return;
+      S.msg = "Lendo arquivos..."; render();
+      for (var k = 0; k < files.length; k++) {
+        var f = files[k];
+        try {
+          var buf = await readBuf(f);
+          if (/\.zip$/i.test(f.name)) {
+            if (!window.JSZip) { skip.push(f.name + " (ZIP indisponível)"); continue; }
+            var z = await window.JSZip.loadAsync(buf), nm = Object.keys(z.files).filter(function (n) { return !z.files[n].dir && /\.sor$/i.test(n) && !/(^|\/)__MACOSX/.test(n); });
+            if (!nm.length) skip.push(f.name + " (sem .sor dentro)");
+            for (var q = 0; q < nm.length; q++) add.push({ name: nm[q].split("/").pop(), buf: await z.files[nm[q]].async("arraybuffer") });
+          } else if (/\.sor$/i.test(f.name)) add.push({ name: f.name, buf: buf });
+          else skip.push(f.name + " (use .sor ou .zip)");
+        } catch (e) { skip.push(f.name + " (" + (e && e.message || e) + ")"); }
+      }
+      add.forEach(function (a) { items.push(mkItem(a.name, a.buf)); });
+      if (add.length && first) { S.i = 0; fit(); }
+      else if (add.length) { S.i = items.length - add.length; S.cmpRes = null; S.cmpP = null; S.cmpSel = null; S.cmpMsg = ""; fit(); }
+      S.msg = (add.length ? add.length + " curva(s) carregada(s). " : "") + (skip.length ? "Ignorado: " + skip.join("; ") + "." : "");
+      render();
+    }
+    function landing() {
+      var h = '<div class="sv-in"><div class="sv-h"><div class="sv-t">📈 Analisador de curvas <span style="font-weight:500;color:var(--mt);font-size:13px">· OTDR (.SOR)</span></div><button class="sv-btn" id="sv-x">✕ Fechar</button></div>' +
+        '<div class="sv-card" id="sv-drop" style="text-align:center;padding:40px 16px;border:2px dashed var(--bd)"><div style="font-size:42px">📈</div><div style="font-size:16px;font-weight:800;margin:6px 0">Carregue as curvas para analisar</div>' +
+        '<div style="font-size:12px;color:var(--mt);margin-bottom:14px">Arraste arquivos <b>.SOR</b> ou um <b>.ZIP</b> com vários arquivos para cá, ou escolha no computador.<br>Tudo é lido no seu navegador; nada é enviado nem salvo.</div>' + pick("📂 Escolher arquivos (.sor / .zip)", "sv-pick", "on") +
+        (S.msg ? '<div class="sv-note" style="margin-top:12px">' + esc(S.msg) + "</div>" : "") + '</div>' +
+        '<div class="sv-note">Com 2 ou mais curvas carregadas você pode compará-las: sobreposição no gráfico, leitura dupla nos cursores e tabela de eventos lado a lado, exportável em slides 16:9 e PowerPoint.</div></div>';
+      root.innerHTML = h; bind0();
+    }
+    function bind0() {
+      var x = document.getElementById("sv-x"); if (x) x.onclick = close;
+      var p = document.getElementById("sv-pick"); if (p) p.onchange = function () { addFiles(p.files); };
+    }
+    root.ondragover = function (e) { if (cfg.standalone) e.preventDefault(); };
+    root.ondrop = function (e) { if (cfg.standalone && e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); addFiles(e.dataTransfer.files); } };
     function render() {
+      if (!items.length) { landing(); return; }
       var it = cur(), P = it.P, h = "";
-      h += '<div class="sv-in"><div class="sv-h"><div class="sv-t">📈 Análise de curva OTDR' + (cfg.title ? ' <span style="font-weight:500;color:var(--mt);font-size:13px">· ' + esc(cfg.title) + "</span>" : "") + '</div><button class="sv-btn" id="sv-x">✕ Fechar</button></div>';
-      if (items.length > 1) {
-        h += '<div class="sv-tabs">' + items.map(function (x, k) { return '<button class="sv-btn' + (k === S.i ? " on" : "") + '" data-tab="' + k + '">' + esc(x.name) + "</button>"; }).join("") + "</div>";
+      h += '<div class="sv-in"><div class="sv-h"><div class="sv-t">📈 ' + (cfg.standalone ? "Analisador de curvas" : "Análise de curva OTDR") + (cfg.title && !cfg.standalone ? ' <span style="font-weight:500;color:var(--mt);font-size:13px">· ' + esc(cfg.title) + "</span>" : "") + '</div><div style="display:flex;gap:6px;flex-wrap:wrap">' + (cfg.standalone ? pick("＋ Adicionar arquivos", "sv-add") : "") + '<button class="sv-btn" id="sv-x">✕ Fechar</button></div></div>';
+      if (S.msg) h += '<div class="sv-note" style="margin:-4px 0 8px">' + esc(S.msg) + "</div>";
+      if (items.length > 1 || cfg.standalone) {
+        h += '<div class="sv-tabs">' + items.map(function (x, k) { return '<span style="display:inline-flex"><button class="sv-btn' + (k === S.i ? " on" : "") + '" data-tab="' + k + '"' + (cfg.standalone ? ' style="border-radius:6px 0 0 6px"' : "") + ">" + esc(x.name) + "</button>" + (cfg.standalone ? '<button class="sv-btn" data-rm="' + k + '" title="Remover esta curva" style="border-radius:0 6px 6px 0;border-left:0;padding:6px 8px">✕</button>' : "") + "</span>"; }).join("") + "</div>";
       }
       if (!P.ok) {
         h += '<div class="sv-card"><div class="sv-f" style="border-color:#dc2626"><b>Não foi possível ler "' + esc(it.name) + '"</b><i>' + esc(P.erro) + "</i></div></div></div>";
@@ -344,7 +387,7 @@
       var sameSet = items.map(function (x, k) { return k; }).filter(function (k) { return k !== S.i && items[k].P.ok; });
       if (sameSet.length || (cfg.others || []).length || S.cmpP) {
         h += '<div class="sv-card"><div class="sv-lb">Comparar curvas</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="sv-cmp"><option value="">— escolher curva para comparar com ' + esc(it.name) + " —</option>" +
-          (sameSet.length ? '<optgroup label="Neste teste (arquivos anexados)">' + sameSet.map(function (k) { return '<option value="i:' + k + '"' + (S.cmpSel === "i:" + k ? " selected" : "") + ">" + esc(items[k].name) + "</option>"; }).join("") + "</optgroup>" : "") +
+          (sameSet.length ? '<optgroup label="' + (cfg.standalone ? "Arquivos carregados" : "Neste teste (arquivos anexados)") + '">' + sameSet.map(function (k) { return '<option value="i:' + k + '"' + (S.cmpSel === "i:" + k ? " selected" : "") + ">" + esc(items[k].name) + "</option>"; }).join("") + "</optgroup>" : "") +
           ((cfg.others || []).length ? '<optgroup label="Testes anteriores deste trecho">' + (cfg.others || []).map(function (o, k) { return '<option value="o:' + k + '"' + (S.cmpSel === "o:" + k ? " selected" : "") + ">" + esc(o.label) + "</option>"; }).join("") + "</optgroup>" : "") + "</select>" +
           (S.cmpP ? '<button class="sv-btn' + (S.showCmp ? " on" : "") + '" id="sv-cmpt">' + (S.showCmp ? "Sobreposição ligada" : "Sobreposição desligada") + "</button>" : "") + "</div>" +
           (S.cmpMsg ? '<div class="sv-note">' + esc(S.cmpMsg) + "</div>" : "") +
@@ -634,6 +677,8 @@
     function bind() {
       function $(id) { return document.getElementById(id); }
       $("sv-x").onclick = close;
+      var ad = $("sv-add"); if (ad) ad.onchange = function () { addFiles(ad.files); };
+      Array.prototype.forEach.call(root.querySelectorAll("[data-rm]"), function (b) { b.onclick = function () { var k = +b.getAttribute("data-rm"); items.splice(k, 1); S.i = Math.max(0, Math.min(S.i, items.length - 1)); S.cmpRes = null; S.cmpP = null; S.cmpSel = null; S.cmpMsg = ""; S.msg = ""; fit(); render(); }; });
       Array.prototype.forEach.call(root.querySelectorAll("[data-tab]"), function (b) { b.onclick = function () { S.i = +b.getAttribute("data-tab"); S.cmpRes = null; S.cmpP = null; S.cmpSel = null; S.cmpMsg = ""; fit(); render(); }; });
       Array.prototype.forEach.call(root.querySelectorAll("[data-ev]"), function (r) { r.onclick = function () { goEv(+r.getAttribute("data-ev")); }; });
       Array.prototype.forEach.call(root.querySelectorAll("[data-goev]"), function (r) { r.style.cursor = "pointer"; r.onclick = function () { goEv(+r.getAttribute("data-goev")); }; });
@@ -699,7 +744,6 @@
       };
     }
     window.addEventListener("resize", function () { if (root.isConnected) draw(); });
-    items.forEach(function () { });
     fit(); render();
     return { close: close };
   }
