@@ -490,46 +490,54 @@ input[type=number]{-moz-appearance:textfield}
           return "<tr" + (r.ai >= 0 ? ' class="ev" data-ev="' + r.ai + '"' : "") + ">" + side(r.a, CA) + side(r.b, CB) + "<td style='border-left:2px solid var(--bd);font-weight:700;color:" + c + "'>" + sg2(r.dp, 2) + "</td><td>" + sg2(r.dx, 0) + "</td></tr>";
         }).join("") + "</tbody></table></div>" +
         '<div class="sv-note">Δ = ' + lbl1().toLowerCase() + ' − ' + lbl2().toLowerCase() + '. Eventos pareados pela posição (tolerância ' + (D.tol * 1000).toFixed(0) + ' m). Diferenças de perda ≥ 0,15 dB ficam em amarelo; perdas acima de 0,30 dB marcadas com ▲.</div>' +
-        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="sv-btn on" id="sv-shc">📤 Compartilhar (slides 16:9)</button><button class="sv-btn" id="sv-pptc">⬇ PowerPoint (.pptx)</button><button class="sv-btn" id="sv-pngc">⬇ PNG 16:9</button><button class="sv-btn" id="sv-csvc">⬇ CSV lado a lado</button><button class="sv-btn" id="sv-csve">⬇ Eventos CSV (atual)</button></div><div class="sv-note" id="sv-shm"></div></div>';
+        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="sv-btn on" id="sv-shc">📤 Compartilhar relatório (16:9)</button><button class="sv-btn" id="sv-pptc">⬇ PowerPoint (.pptx)</button><button class="sv-btn" id="sv-pngc">⬇ PNG 16:9</button><button class="sv-btn" id="sv-csvc">⬇ CSV lado a lado</button><button class="sv-btn" id="sv-csve">⬇ Eventos CSV (atual)</button></div><div class="sv-note" id="sv-shm"></div></div>';
       return h;
     }
     function lbl1() { return S.cmpSel && String(S.cmpSel).indexOf("i:") === 0 ? "FIBRA " + (S.i + 1) : "ATUAL"; }
     function lbl2() { return S.cmpSel && String(S.cmpSel).indexOf("i:") === 0 ? "FIBRA " + (+String(S.cmpSel).slice(2) + 1) : "COMPARADA"; }
-    /* slides 16:9 (1920x1080 = formato padrão do PowerPoint "Widescreen") */
-    function slidesCmp() {
-      var W = 1920, H = 1080, M = 40, CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6", FN = "Inter,system-ui,sans-serif";
-      var D = cmpData(), P = cur().P, A = cur().A, C = S.cmpP, B = S.cmpA, na = cur().name, nb = S.cmpName, l1 = lbl1(), l2 = lbl2();
-      var perPage = 17, pages = Math.max(1, Math.ceil(D.rows.length / perPage)), total = 0, out = [], HI = 0.30;
-      var when = new Date().toLocaleString("pt-BR");
-      function mk() { var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var x = cv.getContext("2d"); x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H); x.textBaseline = "middle"; return { cv: cv, x: x }; }
-      function fit(x, t, w) { t = String(t == null ? "" : t); if (x.measureText(t).width <= w) return t; while (t.length > 1 && x.measureText(t + "…").width > w) t = t.slice(0, -1); return t + "…"; }
-      function head(x, idx, suf) {
-        x.fillStyle = "#0f172a"; x.fillRect(0, 0, W, 84); x.textAlign = "left"; x.fillStyle = "#ffffff"; x.font = "800 30px " + FN; x.fillText("Comparação de curvas OTDR" + (suf || ""), M, 33);
-        x.font = "500 16px " + FN; x.fillStyle = "#cbd5e1"; x.fillText(fit(x, (cfg.title || "") + "  ·  " + when, 1300), M, 62);
-        x.textAlign = "right"; x.font = "700 16px " + FN; x.fillText("TESTAR BARRAMENTO · V.tal     " + idx + "/" + total, W - M, 42);
-      }
-      function kp(PP, AA) { var m = AA.metricas; return [["Comprimento", m.comprimento.toFixed(3) + " km"], ["Perda total", m.perdaTotal != null ? m.perdaTotal.toFixed(2) + " dB" : "—"], ["Atenuação média", m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—"], ["ORL", m.orl ? m.orl.toFixed(1) + " dB" : "—"], ["Eventos", String(m.nEventos)], ["Pior perda", m.pior ? m.pior.perda.toFixed(2) + " dB @ " + m.pior.dist.toFixed(2) + " km" : "—"], ["Pior reflectância", m.piorRefl ? m.piorRefl.refl.toFixed(1) + " dB" : "—"], ["Faixa dinâmica", m.dinamica != null ? m.dinamica.toFixed(1) + " dB" : "—"]]; }
-      /* ---- slides de cada fibra: conteúdo completo, continua no slide seguinte se não couber ---- */
-      var cw = (W - 2 * M - 40) / 2, TOP = 104, BOT = H - 46, mx = mk().x, x;
+    /* relatório em slides 16:9 (1920x1080 = padrão "Widescreen" do PowerPoint) */
+    var MELH = 0.50, HI = 0.30;
+    function melhoria(PP) { var ev = PP.events.filter(function (e) { return !e.fim_de_fibra && e.perda > MELH; }); return { soma: ev.reduce(function (a, e) { return a + e.perda; }, 0), n: ev.length }; }
+    function slidesCmp(logo) {
+      var W = 1920, H = 1080, M = 40, CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6", TEAL = "#00a99d", FN = "Inter,system-ui,sans-serif";
+      var P = cur().P, A = cur().A, C = S.cmpP, B = S.cmpA, na = cur().name, nb = S.cmpName, l1 = lbl1(), l2 = lbl2(), out = [], total = 0, x;
+      var when = new Date().toLocaleString("pt-BR"), cw = (W - 2 * M - 40) / 2, TOP = 118, BOT = H - 50;
+      function mk() { var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var c = cv.getContext("2d"); c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, H); c.textBaseline = "middle"; return { cv: cv, x: c }; }
+      var mx = mk().x;
+      function fit(c, t, w) { t = String(t == null ? "" : t); if (c.measureText(t).width <= w) return t; while (t.length > 1 && c.measureText(t + "…").width > w) t = t.slice(0, -1); return t + "…"; }
       function wrap(t, w, font) { mx.font = font; var ws = String(t == null ? "" : t).split(/\s+/), ln = [], c = ""; ws.forEach(function (wd) { var tt = c ? c + " " + wd : wd; if (mx.measureText(tt).width > w && c) { ln.push(c); c = wd; } else c = tt; }); if (c) ln.push(c); return ln.length ? ln : [""]; }
-      function hiEv(e) { return !e.fim_de_fibra && e.perda > HI; }
+      function rr(c, x0, y0, w, h, r) { c.beginPath(); c.moveTo(x0 + r, y0); c.arcTo(x0 + w, y0, x0 + w, y0 + h, r); c.arcTo(x0 + w, y0 + h, x0, y0 + h, r); c.arcTo(x0, y0 + h, x0, y0, r); c.arcTo(x0, y0, x0 + w, y0, r); c.closePath(); }
+      function emblem(c, x0, y0, sz) { /* marca da ferramenta: onda DWDM entre dois equipamentos */
+        rr(c, x0, y0, sz, sz, sz * 0.22); c.fillStyle = TEAL; c.fill();
+        c.strokeStyle = "#ffffff"; c.lineWidth = sz * 0.07; c.lineCap = "round"; c.beginPath();
+        for (var i = 0; i <= 40; i++) { var t = i / 40, px = x0 + sz * (0.2 + 0.6 * t), py = y0 + sz * (0.5 - 0.17 * Math.sin(t * Math.PI * 3)); i ? c.lineTo(px, py) : c.moveTo(px, py); } c.stroke();
+        c.fillStyle = "#ffffff"; [0.16, 0.84].forEach(function (f) { c.beginPath(); c.arc(x0 + sz * f, y0 + sz * 0.5, sz * 0.075, 0, 6.2832); c.fill(); });
+      }
+      function head(c, idx) {
+        c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, 96); c.fillStyle = TEAL; c.fillRect(0, 96, W, 4);
+        var xx = M;
+        if (logo) { var lh = 40, lw = logo.width * lh / logo.height; try { c.drawImage(logo, xx, 28, lw, lh); xx += lw + 18; c.fillStyle = BD; c.fillRect(xx, 24, 2, 48); xx += 20; } catch (e) { } }
+        emblem(c, xx, 22, 52); xx += 68;
+        c.textAlign = "left"; c.fillStyle = TX; c.font = "800 28px " + FN; c.fillText("TESTAR BARRAMENTO", xx, 38);
+        c.fillStyle = MT; c.font = "500 16px " + FN; c.fillText("Validação de Campo — Rede DWDM", xx, 66);
+        c.textAlign = "right"; c.fillStyle = TX; c.font = "800 22px " + FN; c.fillText("RELATÓRIO DE CURVAS OTDR", W - M, 36);
+        c.fillStyle = MT; c.font = "500 15px " + FN; c.fillText(fit(c, (cfg.title ? cfg.title + "  ·  " : "") + "emitido em " + when + "   ·   página " + idx + "/" + total, 900), W - M, 66);
+      }
       function stTxt(sv) { return sv === "ok" ? "OK" : sv === "bad" ? "CRÍTICO" : sv === "warn" ? "ATENÇÃO" : "INFO"; }
       function blocksFor(color, label, name, PP, AA) {
-        var Bk = [], f = PP.fxd;
-        function title(t) { return { h: 30, need: 90, d: function (x0, y) { x.textAlign = "left"; x.fillStyle = color; x.font = "800 14px " + FN; x.fillText(t, x0, y + 16); x.fillStyle = color; x.fillRect(x0, y + 26, cw, 2); } }; }
-        /* cabeçalho da fibra */
+        var Bk = [], f = PP.fxd, m = AA.metricas, mh = melhoria(PP);
+        function title(t) { return { h: 34, need: 96, d: function (x0, y) { x.textAlign = "left"; x.fillStyle = color; x.font = "800 14px " + FN; x.fillText(t, x0, y + 16); x.fillRect(x0, y + 27, cw, 2); } }; }
         Bk.push({ h: 58, d: function (x0, y) { x.fillStyle = color; x.fillRect(x0, y, cw, 50); x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "800 22px " + FN; x.fillText(fit(x, label + "  ·  " + name, cw - 24), x0 + 14, y + 26); } });
-        Bk.push({ h: 62, d: function (x0, y) { var vc = COR[AA.sev]; x.fillStyle = vc + "1f"; x.fillRect(x0, y, 360, 52); x.strokeStyle = vc; x.lineWidth = 2; x.strokeRect(x0 + 1, y + 1, 358, 50); x.fillStyle = vc; x.textAlign = "center"; x.font = "800 22px " + FN; x.fillText(ROT[AA.sev], x0 + 180, y + 27); x.textAlign = "left"; x.fillStyle = MT; x.font = "500 16px " + FN; x.fillText(fit(x, (f.comprimentoOnda || "") + " nm · pulso " + f.pulso + " ns · IOR " + f.ior.toFixed(4), cw - 380), x0 + 376, y + 27); } });
-        /* resumo (indicadores) */
-        Bk.push({ h: 142, d: function (x0, y) { var k = kp(PP, AA), bw = (cw - 30) / 4; k.forEach(function (it, i) { var bx = x0 + (i % 4) * (bw + 10), by = y + Math.floor(i / 4) * 66; x.fillStyle = "#f1f5f9"; x.fillRect(bx, by, bw, 58); x.textAlign = "left"; x.fillStyle = MT; x.font = "600 12px " + FN; x.fillText(it[0].toUpperCase(), bx + 10, by + 16); x.fillStyle = TX; x.font = "800 18px " + FN; x.fillText(fit(x, it[1], bw - 16), bx + 10, by + 40); }); } });
-        /* achados — todos, texto completo */
-        Bk.push(title("ANÁLISE AUTOMÁTICA — ACHADOS (" + AA.findings.length + ")"));
-        if (!AA.findings.length) Bk.push({ h: 30, d: function (x0, y) { x.textAlign = "left"; x.fillStyle = COR.ok; x.font = "700 15px " + FN; x.fillText("● Nenhuma anomalia encontrada nos limites configurados", x0, y + 15); } });
-        AA.findings.forEach(function (fd) {
-          var ln = wrap(fd.det, cw - 26, "500 14px " + FN), tl = wrap(fd.titulo, cw - 26, "700 15px " + FN);
-          Bk.push({ h: tl.length * 20 + ln.length * 19 + 10, d: function (x0, y) { x.fillStyle = COR[fd.sev]; x.beginPath(); x.arc(x0 + 6, y + 11, 6, 0, 6.2832); x.fill(); x.textAlign = "left"; x.fillStyle = TX; x.font = "700 15px " + FN; tl.forEach(function (t, i) { x.fillText(t, x0 + 20, y + 11 + i * 20); }); x.fillStyle = MT; x.font = "500 14px " + FN; ln.forEach(function (t, i) { x.fillText(t, x0 + 20, y + 11 + tl.length * 20 + i * 19); }); } });
-        });
-        Bk.push({ h: 8, sp: 1, d: function () { } });
+        /* resumo: comprimento de onda, pulso, comprimento total, perda, atenuação média, eventos, MELHORIA */
+        Bk.push({ h: 150, d: function (x0, y) {
+          var bw = (cw - 30) / 4, k = [["Comprimento de onda", (f.comprimentoOnda || "—") + " nm"], ["Pulso", f.pulso + " ns"], ["Comprimento total medido", m.comprimento.toFixed(3) + " km"], ["Perda total", m.perdaTotal != null ? m.perdaTotal.toFixed(2) + " dB" : "—"], ["Atenuação média", m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—"], ["Quantidade de eventos", String(m.nEventos)]];
+          k.forEach(function (it, i) { var bx = x0 + (i % 4) * (bw + 10), by = y + Math.floor(i / 4) * 72; x.fillStyle = "#f1f5f9"; x.fillRect(bx, by, bw, 64); x.textAlign = "left"; x.fillStyle = MT; x.font = "600 12px " + FN; x.fillText(it[0].toUpperCase(), bx + 12, by + 18); x.fillStyle = TX; x.font = "800 21px " + FN; x.fillText(fit(x, it[1], bw - 20), bx + 12, by + 44); });
+          var bx = x0 + 2 * (bw + 10), by = y + 72, ww = 2 * bw + 10, ok = mh.n === 0, mc = ok ? "#16a34a" : "#dc2626";
+          x.fillStyle = ok ? "#dcfce7" : "#fee2e2"; x.fillRect(bx, by, ww, 64); x.fillStyle = mc; x.fillRect(bx, by, 6, 64);
+          x.textAlign = "left"; x.font = "800 12px " + FN; x.fillText("MELHORIA  (soma das perdas de eventos acima de 0,50 dB)", bx + 16, by + 18);
+          x.font = "800 24px " + FN; var vt = mh.soma.toFixed(2) + " dB"; x.fillText(vt, bx + 16, by + 45); var vw = x.measureText(vt).width;
+          x.fillStyle = TX; x.font = "600 15px " + FN; x.fillText(ok ? "nenhum evento acima de 0,50 dB" : mh.n + " evento(s) a corrigir", bx + 30 + vw, by + 45);
+        } });
         /* dados do arquivo — leitura completa */
         Bk.push(title("DADOS DO ARQUIVO (LEITURA COMPLETA)"));
         var pl = paramList(name, PP), half = cw / 2 - 10, pend = null;
@@ -544,19 +552,19 @@ input[type=number]{-moz-appearance:textfield}
           }
         });
         if (pend) pairRow(pend, null);
-        Bk.push({ h: 10, sp: 1, d: function () { } });
+        Bk.push({ h: 12, sp: 1, d: function () { } });
         /* tabela de eventos — todos */
         Bk.push(title("TABELA DE EVENTOS (" + PP.events.length + ")"));
-        var cols = [44, 150, 116, 112, 112, 112, 0]; cols[6] = cw - cols.slice(0, 6).reduce(function (a, b) { return a + b; }, 0);
+        var cols = [44, 150, 116, 112, 112, 112, 0]; cols[6] = cw - cols.slice(0, 6).reduce(function (a, c) { return a + c; }, 0);
         var xsR = [0]; cols.forEach(function (c, i) { xsR.push(xsR[i] + c); });
         var hdr = { h: 28, hdr: 1, d: function (x0, y) { x.fillStyle = "#e9eef3"; x.fillRect(x0, y, cw, 28); x.fillStyle = MT; x.font = "700 12px " + FN; x.textAlign = "center"; ["#", "Tipo", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Status"].forEach(function (t, i) { x.fillText(t, x0 + (xsR[i] + xsR[i + 1]) / 2, y + 15); }); } };
         Bk.push(hdr);
         PP.events.forEach(function (e, k) {
-          var sv = AA.evSev[k] || "ok", sec = AA.secoes.filter(function (q) { return q.de === e.n; })[0], hi = hiEv(e);
+          var sv = AA.evSev[k] || "ok", sec = AA.secoes.filter(function (q) { return q.de === e.n; })[0], hi = !e.fim_de_fibra && e.perda > HI, hh = !e.fim_de_fibra && e.perda > MELH;
           Bk.push({ h: 29, ev: 1, d: function (x0, y) {
-            if (hi) { x.fillStyle = "#fef3c7"; x.fillRect(x0, y, cw, 29); x.fillStyle = "#d97706"; x.fillRect(x0, y, 5, 29); } else if (k % 2) { x.fillStyle = "#f6f8fa"; x.fillRect(x0, y, cw, 29); }
+            if (hi) { x.fillStyle = hh ? "#fee2e2" : "#fef3c7"; x.fillRect(x0, y, cw, 29); x.fillStyle = hh ? "#dc2626" : "#d97706"; x.fillRect(x0, y, 5, 29); } else if (k % 2) { x.fillStyle = "#f6f8fa"; x.fillRect(x0, y, cw, 29); }
             var v = [String(e.n), tipoCurto(e), e.dist.toFixed(3), e.fim_de_fibra ? "—" : e.perda.toFixed(2), e.natureza !== "nrefl" && e.refl ? e.refl.toFixed(1) : "—", sec ? sec.att.toFixed(3) : "—", stTxt(sv)];
-            v.forEach(function (t, i) { x.textAlign = "center"; x.fillStyle = i === 6 ? COR[sv] : i === 3 && hi ? "#b45309" : TX; x.font = (i === 6 || (i === 3 && hi) ? "800 " : "500 ") + "15px " + FN; x.fillText(t + (i === 3 && hi ? " ▲" : ""), x0 + (xsR[i] + xsR[i + 1]) / 2, y + 15); });
+            v.forEach(function (t, i) { x.textAlign = "center"; x.fillStyle = i === 6 ? COR[sv] : i === 3 && hi ? (hh ? "#b91c1c" : "#b45309") : TX; x.font = (i === 6 || (i === 3 && hi) ? "800 " : "500 ") + "15px " + FN; x.fillText(t + (i === 3 && hi ? " ▲" : ""), x0 + (xsR[i] + xsR[i + 1]) / 2, y + 15); });
           } });
         });
         Bk.hdr = hdr; Bk.cont = function (x0, y) { x.fillStyle = color + "1a"; x.fillRect(x0, y, cw, 34); x.fillStyle = color; x.fillRect(x0, y, 5, 34); x.textAlign = "left"; x.font = "800 16px " + FN; x.fillText(fit(x, label + "  ·  " + name + "  (continuação)", cw - 24), x0 + 14, y + 18); };
@@ -575,53 +583,36 @@ input[type=number]{-moz-appearance:textfield}
         });
         return pgs;
       }
-      var pA = paginate(blocksFor(CA, l1, na, P, A)), pB = paginate(blocksFor(CB, l2, nb, C, B)), nFib = Math.max(pA.length, pB.length);
-      total = nFib + pages;
-      for (var fp = 0; fp < nFib; fp++) {
-        var sf = mk(); x = sf.x; head(x, fp + 1, " — análise de cada fibra" + (nFib > 1 ? " (" + (fp + 1) + "/" + nFib + ")" : ""));
+      var pA = paginate(blocksFor(CA, l1, na, P, A)), pB = paginate(blocksFor(CB, l2, nb, C, B));
+      total = Math.max(pA.length, pB.length);
+      for (var fp = 0; fp < total; fp++) {
+        var sf = mk(); x = sf.x; head(x, fp + 1);
         (pA[fp] || []).forEach(function (it) { it.d(M, it.y); });
         (pB[fp] || []).forEach(function (it) { it.d(M + cw + 40, it.y); });
         x.strokeStyle = BD; x.lineWidth = 1; x.beginPath(); x.moveTo(W / 2, TOP); x.lineTo(W / 2, BOT); x.stroke();
-        x.fillStyle = MT; x.font = "500 12px " + FN; x.textAlign = "left"; x.fillText("Eventos com perda acima de " + HI.toFixed(2).replace(".", ",") + " dB em destaque (▲). Análise automática por regras — apoio à decisão; a interpretação final é do analista.", M, H - 22);
+        x.fillStyle = TEAL; x.fillRect(0, H - 34, W, 34);
+        x.fillStyle = "#ffffff"; x.font = "600 13px " + FN; x.textAlign = "left";
+        x.fillText("▲ amarelo: perda acima de 0,30 dB   ·   ▲ vermelho: perda acima de 0,50 dB (entra na MELHORIA)   ·   Análise de apoio — a interpretação final é do analista.", M, H - 17);
+        x.textAlign = "right"; x.fillText("TESTAR BARRAMENTO · Validação de Campo — Rede DWDM", W - M, H - 17);
         out.push(sf.cv);
-      }
-      /* ---- slides 2..n: tabela de eventos lado a lado ---- */
-      for (var pg = 0; pg < pages; pg++) {
-        var sl = mk(), z = sl.x; x = z; head(z, nFib + 1 + pg, " — eventos lado a lado" + (pages > 1 ? " (" + (pg + 1) + "/" + pages + ")" : ""));
-        var cw2 = (W - 2 * M - 24) / 2;
-        [[M, CA, l1, na, P, A], [M + cw2 + 24, CB, l2, nb, C, B]].forEach(function (c) { var xx = c[0], m = c[5].metricas, ln = wrap((c[4].fxd.comprimentoOnda || "") + " nm · pulso " + c[4].fxd.pulso + " ns · comprimento " + m.comprimento.toFixed(3) + " km · perda total " + f2c(m.perdaTotal, 2) + " dB · atenuação média " + (m.attMedia != null ? m.attMedia.toFixed(3) + " dB/km" : "—") + " · ORL " + (m.orl ? m.orl.toFixed(1) + " dB" : "—") + " · " + m.nEventos + " eventos · " + ROT[c[5].sev], cw2 - 30, "500 15px " + FN); z.fillStyle = c[1] + "16"; z.fillRect(xx, 100, cw2, 84); z.fillStyle = c[1]; z.fillRect(xx, 100, 5, 84); z.textAlign = "left"; z.font = "800 19px " + FN; z.fillText(fit(z, c[2] + "  ·  " + c[3], cw2 - 28), xx + 18, 120); z.fillStyle = TX; z.font = "500 15px " + FN; ln.slice(0, 2).forEach(function (t, q) { z.fillText(t, xx + 18, 146 + q * 22); }); });
-        var ty = 198, HH = 38, RH = 38, cols2 = [90, 110, 110, 110, 150, 90, 110, 110, 110, 150, 120, 100], tw = cols2.reduce(function (a, b) { return a + b; }, 0), sc = (W - 2 * M) / tw; cols2 = cols2.map(function (c) { return c * sc; });
-        var xs2 = [M]; cols2.forEach(function (c, i) { xs2.push(xs2[i] + c); });
-        z.fillStyle = CA + "26"; z.fillRect(xs2[0], ty, xs2[5] - xs2[0], HH); z.fillStyle = CB + "26"; z.fillRect(xs2[5], ty, xs2[10] - xs2[5], HH); z.fillStyle = "#e9eef3"; z.fillRect(xs2[10], ty, xs2[12] - xs2[10], HH);
-        z.font = "800 16px " + FN; z.textAlign = "center"; z.fillStyle = CA; z.fillText(l1, (xs2[0] + xs2[5]) / 2, ty + HH / 2); z.fillStyle = CB; z.fillText(l2, (xs2[5] + xs2[10]) / 2, ty + HH / 2); z.fillStyle = TX; z.fillText("DIFERENÇA (" + l1.toLowerCase() + " − " + l2.toLowerCase() + ")", (xs2[10] + xs2[12]) / 2, ty + HH / 2);
-        var hd2 = ["Evento", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Evento", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Δ perda (dB)", "Δ pos. (m)"], ty2 = ty + HH;
-        z.font = "700 14px " + FN; z.fillStyle = MT; hd2.forEach(function (t, i) { z.fillText(t, (xs2[i] + xs2[i + 1]) / 2, ty2 + HH / 2); });
-        z.strokeStyle = BD; z.lineWidth = 1; z.beginPath(); z.moveTo(M, ty2 + HH); z.lineTo(W - M, ty2 + HH); z.stroke();
-        var rows = D.rows.slice(pg * perPage, (pg + 1) * perPage), y0 = ty2 + HH;
-        rows.forEach(function (r, k) {
-          var yy = y0 + k * RH, mid = yy + RH / 2; if (k % 2) { z.fillStyle = "#f6f8fa"; z.fillRect(M, yy, W - 2 * M, RH); }
-          function side(c, o) { z.textAlign = "center"; z.fillStyle = TX; z.font = "500 16px " + FN; if (!c) { z.fillStyle = MT; z.fillText("— não encontrado nesta curva —", (xs2[o] + xs2[o + 5]) / 2, mid); return; } var hi = c.perda != null && c.perda > HI; if (hi) { z.fillStyle = "#fef3c7"; z.fillRect(xs2[o], yy, xs2[o + 5] - xs2[o], RH); z.fillStyle = "#d97706"; z.fillRect(xs2[o] + 2, yy, 4, RH); } [c.tipo + " " + c.n, c.pos.toFixed(3), f2c(c.perda, 2) + (hi ? " ▲" : ""), f2c(c.refl, 1), f2c(c.att, 3)].forEach(function (t, i) { z.fillStyle = i === 2 && hi ? "#b45309" : TX; z.font = (i === 2 && hi ? "800 " : "500 ") + "16px " + FN; z.fillText(t, (xs2[o + i] + xs2[o + i + 1]) / 2, mid); }); }
-          side(r.a, 0); side(r.b, 5);
-          var big = r.dp != null && Math.abs(r.dp) >= 0.15; z.textAlign = "center"; z.font = "800 16px " + FN; z.fillStyle = big ? "#b45309" : TX; z.fillText(sg2(r.dp, 2), (xs2[10] + xs2[11]) / 2, mid); z.font = "500 16px " + FN; z.fillStyle = TX; z.fillText(sg2(r.dx, 0), (xs2[11] + xs2[12]) / 2, mid);
-        });
-        var yEnd = y0 + rows.length * RH;
-        [[0, CA], [5, CB], [10, BD]].forEach(function (c) { z.strokeStyle = c[1]; z.lineWidth = 2; z.beginPath(); z.moveTo(xs2[c[0]], ty); z.lineTo(xs2[c[0]], yEnd); z.stroke(); });
-        z.strokeStyle = BD; z.lineWidth = 1; z.beginPath(); z.moveTo(M, yEnd); z.lineTo(W - M, yEnd); z.stroke();
-        z.textAlign = "left"; z.fillStyle = MT; z.font = "500 13px " + FN; z.fillText("Eventos pareados pela posição (tolerância " + (D.tol * 1000).toFixed(0) + " m). Δ = " + l1.toLowerCase() + " − " + l2.toLowerCase() + "; Δ ≥ 0,15 dB em destaque; perdas acima de 0,30 dB marcadas (▲). Análise de apoio — a interpretação final é do analista.", M, H - 22);
-        out.push(sl.cv);
       }
       return out;
     }
-
     function cmpText() {
       var D = cmpData(), t = "Comparação de curvas OTDR\n" + (cfg.title || "") + "\nATUAL: " + cur().name + "\nCOMPARADA: " + S.cmpName + "\n\nPos(km) | Perda atual | Perda comp. | Δ\n";
       D.rows.forEach(function (r) { t += (r.a ? r.a.pos : r.b.pos).toFixed(3) + " | " + (r.a ? f2c(r.a.perda, 2) : "—") + " | " + (r.b ? f2c(r.b.perda, 2) : "—") + " | " + sg2(r.dp, 2) + "\n"; });
       return t;
     }
+    var LOGO_URL = "https://vtal.com/wp-content/uploads/2025/02/logo-vtal-footer.png", logoP = null;
+    function loadLogo() { if (logoP) return logoP; logoP = new Promise(function (ok) { var im = new Image(), done = false; im.crossOrigin = "anonymous"; im.onload = function () { if (done) return; done = true; try { var t = document.createElement("canvas"); t.width = 2; t.height = 2; var c = t.getContext("2d"); c.drawImage(im, 0, 0, 2, 2); t.toDataURL(); ok(im); } catch (e) { ok(null); } }; im.onerror = function () { if (!done) { done = true; ok(null); } }; setTimeout(function () { if (!done) { done = true; ok(null); } }, 2500); im.src = LOGO_URL; }); return logoP; }
     function exportCmp(mode) {
+      var msg0 = document.getElementById("sv-shm"); if (msg0) msg0.textContent = "Gerando relatório...";
+      loadLogo().then(function (lg) { exportCmp2(mode, lg); });
+    }
+    function exportCmp2(mode, logo) {
       var msg = document.getElementById("sv-shm"); function say(t) { if (msg) msg.textContent = t; }
-      var cvs; try { cvs = slidesCmp(); } catch (e) { say("Erro ao gerar slides: " + (e && e.message || e)); return; }
-      var base = "comparacao_" + cur().name.replace(/\.sor$/i, "") + "_x_" + S.cmpName.replace(/\.sor$/i, "");
+      var cvs; try { cvs = slidesCmp(logo); } catch (e) { say("Erro ao gerar slides: " + (e && e.message || e)); return; }
+      var base = "relatorio_curvas_" + cur().name.replace(/\.sor$/i, "") + "_x_" + S.cmpName.replace(/\.sor$/i, "");
       function save(bl, nome) { var a = document.createElement("a"), u = URL.createObjectURL(bl); a.href = u; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); }
       if (mode === "pptx") {
         if (!window.PptxGenJS) { say("Biblioteca de PowerPoint não carregada."); return; }
@@ -644,7 +635,7 @@ input[type=number]{-moz-appearance:textfield}
           z.generateAsync({ type: "blob" }).then(function (zb) { save(zb, base + "_slides.zip"); say(out.length + " slides 16:9 (1920×1080) em um ZIP."); });
         }
         if (mode === "share" && navigator.share && files.length && navigator.canShare && navigator.canShare({ files: files })) {
-          navigator.share({ files: files, title: "Comparação de curvas OTDR", text: cmpText() }).then(function () { say("Compartilhado."); }).catch(function (e) { if (e && e.name !== "AbortError") baixar(); });
+          navigator.share({ files: files, title: "Relatório de curvas OTDR — TESTAR BARRAMENTO", text: cmpText() }).then(function () { say("Compartilhado."); }).catch(function (e) { if (e && e.name !== "AbortError") baixar(); });
         } else baixar();
       }
     }
