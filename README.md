@@ -21,3 +21,8 @@ Módulo `src/sor-analisador.js` (embutido no `index.html` entre `/*TBSOR-BEGIN*/
 - **Extrair:** `📦 Extrair` lista o conteúdo do ZIP (baixar cada arquivo / analisar); `⬇ Baixar tudo (.zip)` junta todos os anexos.
 - **Analisar:** `📈 Analisar curvas` abre curva com zoom/cursores A-B, tabela de eventos, análise automática por regras (limites no topo do arquivo, `LIM`), média bidirecional LR/RL e comparação com testes anteriores do mesmo trecho.
 - Para regenerar o `index.html` após editar o módulo, substitua o trecho entre os marcadores.
+
+## Melhorias realizadas e ADMIN
+- Ao registrar um teste, além do BA/JM há o campo opcional **Melhorias realizadas** (texto livre), exibido no histórico e pesquisável.
+- **ADMIN** (botão 🔐 ADMIN no topo): login pelo Supabase Auth. Admin pode excluir testes (com seus arquivos) e arquivos de curvas. Incluir testes/arquivos continua aberto a todos.
+- Configuração: rodar o bloco 5 do `supabase/schema.sql` e criar os usuários em *Authentication > Users* (e-mail/senha, *Auto Confirm*). A lista de admins fica na tabela `tb_admins`. Senhas nunca vão para o código.
