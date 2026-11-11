@@ -418,6 +418,12 @@
           return '<tr class="ev" data-ev="' + k + '"' + (hi30 ? ' style="background:rgba(245,158,11,.16);box-shadow:inset 4px 0 #d97706"' : "") + '><td>' + e.n + "</td><td>" + tipoTxt(e) + "</td><td>" + e.dist.toFixed(3) + "</td><td" + (hi30 ? ' style="color:#d97706;font-weight:800"' : "") + ">" + (e.fim_de_fibra ? "—" : e.perda.toFixed(2) + (hi30 ? " ▲" : "")) + "</td>" + (bi ? "<td>" + (bi[k] ? bi[k].media.toFixed(2) : "—") + "</td>" : "") + "<td>" + (e.natureza !== "nrefl" && e.refl ? e.refl.toFixed(1) : "—") + "</td><td>" + (sec ? sec.att.toFixed(3) : "—") + '</td><td><span class="sv-chip" style="color:' + COR[sv] + ";border-color:" + COR[sv] + '">' + (sv === "ok" ? "OK" : sv === "bad" ? "CRÍTICO" : sv === "warn" ? "ATENÇÃO" : "INFO") + "</span></td></tr>";
         }).join("") + "</tbody></table></div>" + (bi ? '<div class="sv-note">Média bidirecional calculada entre as duas curvas deste teste (posições espelhadas).</div>' : "") + '<div style="margin-top:8px"><button class="sv-btn" id="sv-csve">⬇ Eventos CSV</button></div></div>';
       }
+      /* relatório (1 ou várias curvas) */
+      var okN = items.filter(function (q) { return q.P.ok; }).length, sc2 = S.rsc === "all" && okN > 1 ? "all" : "one";
+      h += '<div class="sv-card"><div class="sv-lb">Relatório de curvas — padrão TESTAR BARRAMENTO (16:9)</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><select id="sv-rsc"><option value="one"' + (sc2 === "one" ? " selected" : "") + ">Somente esta curva (" + esc(it.name) + ")</option>" + (okN > 1 ? '<option value="all"' + (sc2 === "all" ? " selected" : "") + ">Todas as curvas (" + okN + ")</option>" : "") + "</select></div>" +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="sv-btn on" id="sv-rsh">📤 Compartilhar relatório (PDF)</button><button class="sv-btn" id="sv-rpp">⬇ PowerPoint (.pptx)</button><button class="sv-btn" id="sv-rpd">⬇ PDF</button><button class="sv-btn" id="sv-rpn">⬇ PNG 16:9</button></div>' +
+        '<div class="sv-note">Mesmo modelo do comparativo: marca, resumo (comprimento de onda, pulso, comprimento total, perda, atenuação média, eventos e MELHORIA), dados completos do arquivo, tabela com todos os eventos (acima de 0,30 dB em destaque) e página final com a curva ilustrada e os piores eventos.' + (okN > 1 ? " Com várias curvas, cada página traz até duas fibras lado a lado." : "") + '</div><div class="sv-note" id="sv-rpm"></div></div>';
       /* parâmetros */
         var pr = paramList(it.name, P);
       h += '<div class="sv-card"><div class="sv-lb">Dados do arquivo (leitura completa)</div><div class="sv-pg">' + pr.map(function (r) { return "<div><span>" + esc(r[0]) + "</span><b>" + esc(r[1]) + "</b></div>"; }).join("") + "</div></div></div>";
@@ -467,10 +473,10 @@
     /* relatório em slides 16:9 (1920x1080 = padrão "Widescreen" do PowerPoint) */
     var MELH = 0.50, HI = 0.30;
     function melhoria(PP) { var ev = PP.events.filter(function (e) { return !e.fim_de_fibra && e.perda > MELH; }); return { soma: ev.reduce(function (a, e) { return a + e.perda; }, 0), n: ev.length }; }
-    function slidesCmp(logo) {
+    function slidesFibers(list, logo, pg) {
       var W = 1920, H = 1080, M = 40, CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6", TEAL = "#00a99d", FN = "Inter,system-ui,sans-serif";
-      var P = cur().P, A = cur().A, C = S.cmpP, B = S.cmpA, na = cur().name, nb = S.cmpName, l1 = lbl1(), l2 = lbl2(), out = [], total = 0, x;
-      var when = new Date().toLocaleString("pt-BR"), cw = (W - 2 * M - 40) / 2, TOP = 118, BOT = H - 50;
+      var two = list.length > 1, P = list[0].P, A = list[0].A, na = list[0].name, l1 = list[0].label, C = two ? list[1].P : null, B = two ? list[1].A : null, nb = two ? list[1].name : "", l2 = two ? list[1].label : "", out = [], total = 0, x;
+      var when = new Date().toLocaleString("pt-BR"), cw = two ? (W - 2 * M - 40) / 2 : W - 2 * M, TOP = 118, BOT = H - 50;
       function mk() { var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var c = cv.getContext("2d"); c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, H); c.textBaseline = "middle"; return { cv: cv, x: c }; }
       var mx = mk().x;
       function fit(c, t, w) { t = String(t == null ? "" : t); if (c.measureText(t).width <= w) return t; while (t.length > 1 && c.measureText(t + "…").width > w) t = t.slice(0, -1); return t + "…"; }
@@ -524,7 +530,7 @@
         Bk.push({ h: 12, sp: 1, d: function () { } });
         /* tabela de eventos — todos */
         Bk.push(title("TABELA DE EVENTOS (" + PP.events.length + ")"));
-        var cols = [44, 150, 116, 112, 112, 112, 0]; cols[6] = cw - cols.slice(0, 6).reduce(function (a, c) { return a + c; }, 0);
+        var sf0 = cw / ((W - 2 * M - 40) / 2), cols = [44, 150, 116, 112, 112, 112, 0].map(function (c) { return c * sf0; }); cols[6] = cw - cols.slice(0, 6).reduce(function (a, c) { return a + c; }, 0);
         var xsR = [0]; cols.forEach(function (c, i) { xsR.push(xsR[i] + c); });
         var hdr = { h: 28, hdr: 1, d: function (x0, y) { x.fillStyle = "#e9eef3"; x.fillRect(x0, y, cw, 28); x.fillStyle = MT; x.font = "700 12px " + FN; x.textAlign = "center"; ["#", "Tipo", "Pos. (km)", "Perda (dB)", "Refl. (dB)", "Atenuação (dB/km)", "Status"].forEach(function (t, i) { x.fillText(t, x0 + (xsR[i] + xsR[i + 1]) / 2, y + 15); }); } };
         Bk.push(hdr);
@@ -552,13 +558,13 @@
         });
         return pgs;
       }
-      var pA = paginate(blocksFor(CA, l1, na, P, A)), pB = paginate(blocksFor(CB, l2, nb, C, B));
-      var nCol = Math.max(pA.length, pB.length); total = nCol + 1;
+      var pA = paginate(blocksFor(CA, l1, na, P, A)), pB = two ? paginate(blocksFor(CB, l2, nb, C, B)) : [];
+      var nCol = Math.max(pA.length, pB.length), off = pg && pg.off || 0; total = pg && pg.tot ? pg.tot : nCol + 1;
       for (var fp = 0; fp < nCol; fp++) {
-        var sf = mk(); x = sf.x; head(x, fp + 1);
+        var sf = mk(); x = sf.x; head(x, off + fp + 1);
         (pA[fp] || []).forEach(function (it) { it.d(M, it.y); });
         (pB[fp] || []).forEach(function (it) { it.d(M + cw + 40, it.y); });
-        x.strokeStyle = BD; x.lineWidth = 1; x.beginPath(); x.moveTo(W / 2, TOP); x.lineTo(W / 2, BOT); x.stroke();
+        if (two) { x.strokeStyle = BD; x.lineWidth = 1; x.beginPath(); x.moveTo(W / 2, TOP); x.lineTo(W / 2, BOT); x.stroke(); }
         x.fillStyle = TEAL; x.fillRect(0, H - 34, W, 34);
         x.fillStyle = "#ffffff"; x.font = "600 13px " + FN; x.textAlign = "left";
         x.fillText("▲ amarelo: perda acima de 0,30 dB   ·   ▲ vermelho: perda acima de 0,50 dB (entra na MELHORIA)   ·   Análise de apoio — a interpretação final é do analista.", M, H - 17);
@@ -566,17 +572,17 @@
         out.push(sf.cv);
       }
       /* ---- página final: curvas ilustrativas com os piores eventos de cada fibra ---- */
-      var sc = mk(); x = sc.x; head(x, total);
+      var sc = mk(); x = sc.x; head(x, off + nCol + 1);
       function footer() { x.fillStyle = TEAL; x.fillRect(0, H - 34, W, 34); x.fillStyle = "#ffffff"; x.font = "600 13px " + FN; x.textAlign = "left"; x.fillText("Ilustração das curvas (nível relativo ao início de cada fibra). Marcados: os 3 piores eventos de cada fibra. Análise de apoio — a interpretação final é do analista.", M, H - 17); x.textAlign = "right"; x.fillText("TESTAR BARRAMENTO · Validação de Campo — Rede DWDM", W - M, H - 17); }
       x.textAlign = "left"; x.fillStyle = TX; x.font = "800 22px " + FN; x.fillText("CURVAS — VISÃO ILUSTRATIVA", M, 136);
-      [[CA, l1 + " · " + na], [CB, l2 + " · " + nb]].forEach(function (lg, i) { var lx = M + 420 + i * 560; x.fillStyle = lg[0]; x.fillRect(lx, 132, 46, 6); x.fillStyle = TX; x.font = "700 16px " + FN; x.fillText(fit(x, lg[1], 480), lx + 58, 136); });
+      [[CA, l1 + " · " + na]].concat(two ? [[CB, l2 + " · " + nb]] : []).forEach(function (lg, i) { var lx = M + 420 + i * 560; x.fillStyle = lg[0]; x.fillRect(lx, 132, 46, 6); x.fillStyle = TX; x.font = "700 16px " + FN; x.fillText(fit(x, lg[1], 480), lx + 58, 136); });
       function worst(PP) { return PP.events.map(function (e, k) { return { e: e, k: k }; }).filter(function (o) { return !o.e.fim_de_fibra && o.e.perda > 0; }).sort(function (a, b) { return b.e.perda - a.e.perda; }); }
-      var wA = worst(P), wB = worst(C);
+      var wA = worst(P), wB = two ? worst(C) : [];
       var g = { l: M + 70, t: 170, w: 1340, h: 790 };
       function lenOf(PP) { var ev = PP.events; return ev.length ? ev[ev.length - 1].dist : PP.trace.n * PP.trace.dx; }
-      var Lmax = Math.max(lenOf(P), lenOf(C)) * 1.04 || 1;
+      var Lmax = Math.max(lenOf(P), two ? lenOf(C) : 0) * 1.04 || 1;
       function rng(PP) { var tr = PP.trace, L = lenOf(PP), i0 = Math.floor(L * 0.01 / tr.dx), i1 = Math.min(tr.n - 1, Math.floor(L * 0.985 / tr.dx)), lo = 1e9, hi = -1e9; for (var i = i0; i <= i1; i++) { var v = tr.y[i]; if (v < lo) lo = v; if (v > hi) hi = v; } return [lo, hi]; }
-      var ra = rng(P), rb = rng(C), ylo = Math.min(ra[0], rb[0]), yhi = Math.max(ra[1], rb[1]), pad = Math.max(1, (yhi - ylo) * 0.12); ylo -= pad; yhi += pad * 1.6;
+      var ra = rng(P), rb = two ? rng(C) : ra, ylo = Math.min(ra[0], rb[0]), yhi = Math.max(ra[1], rb[1]), pad = Math.max(1, (yhi - ylo) * 0.12); ylo -= pad; yhi += pad * 1.6;
       function cx(v) { return g.l + v / Lmax * g.w; } function cy(v) { return g.t + (1 - (v - ylo) / (yhi - ylo)) * g.h; }
       x.fillStyle = "#f8fafc"; x.fillRect(g.l, g.t, g.w, g.h); x.strokeStyle = BD; x.lineWidth = 1; x.strokeRect(g.l, g.t, g.w, g.h);
       var tX = ticks(0, Lmax, 10), tY = ticks(ylo, yhi, 8);
@@ -591,10 +597,10 @@
         else { for (var c = 0; c < ncol; c++) { var a = Math.floor(c * per), b = Math.min(i1, Math.floor((c + 1) * per)), lo = 1e9, hi = -1e9; for (var k = a; k <= b; k++) { var v = tr.y[k]; if (v < lo) lo = v; if (v > hi) hi = v; } var X2 = g.l + c + 0.5; c ? x.lineTo(X2, cy(hi)) : x.moveTo(X2, cy(hi)); x.lineTo(X2, cy(lo)); } }
         x.stroke(); x.restore();
       }
-      trace(C, CB); trace(P, CA);
+      if (two) trace(C, CB); trace(P, CA);
       /* marcações dos piores eventos */
       var tags = [];
-      [[wA.slice(0, 3), P, CA, "F1"], [wB.slice(0, 3), C, CB, "F2"]].forEach(function (grp, gi) {
+      [[wA.slice(0, 3), P, CA, "F1"]].concat(two ? [[wB.slice(0, 3), C, CB, "F2"]] : []).forEach(function (grp, gi) {
         grp[0].forEach(function (o, r) {
           var e = o.e, X = cx(e.dist), tr = grp[1].trace, Y = cy(tr.y[Math.max(0, Math.min(tr.n - 1, Math.round(e.dist / tr.dx)))]);
           var hc = e.perda > MELH ? "#dc2626" : e.perda > HI ? "#d97706" : grp[2];
@@ -616,7 +622,7 @@
       });
       /* painel: piores eventos */
       var px = g.l + g.w + 40, pw = W - M - px, py = 170;
-      [[wA, CA, l1, na, P], [wB, CB, l2, nb, C]].forEach(function (grp, gi) {
+      [[wA, CA, l1, na, P]].concat(two ? [[wB, CB, l2, nb, C]] : []).forEach(function (grp, gi) {
         var y0 = py + gi * 410, mh = melhoria(grp[4]);
         x.fillStyle = grp[1]; x.fillRect(px, y0, pw, 40); x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "800 16px " + FN; x.fillText(fit(x, grp[2] + " · " + grp[3], pw - 20), px + 12, y0 + 21);
         x.fillStyle = TX; x.font = "800 13px " + FN; x.fillText("PIORES EVENTOS", px, y0 + 62);
@@ -634,6 +640,24 @@
       footer();
       out.push(sc.cv);
       return out;
+    }
+    /* relatório para 1 ou várias curvas: 1 fibra = página inteira; 2 fibras = lado a lado; 3+ = de 2 em 2 (a última pode ficar sozinha) */
+    function fibList() { var r = []; items.forEach(function (it, k) { if (it.P.ok) r.push({ idx: k, P: it.P, A: it.A || analyze(it.P, {}), name: it.name, label: "FIBRA " + (k + 1) }); }); return r; }
+    function slidesAll(list, logo) {
+      var groups = [], i; for (i = 0; i < list.length; i += 2) groups.push(list.slice(i, i + 2));
+      var cnt = groups.map(function (g) { return slidesFibers(g, logo, { off: 0, tot: 99 }).length; }), tot = cnt.reduce(function (a, c) { return a + c; }, 0), off = 0, out = [];
+      groups.forEach(function (g, gi) { out = out.concat(slidesFibers(g, logo, { off: off, tot: tot })); off += cnt[gi]; });
+      return out;
+    }
+    function slidesCmp(logo) {
+      var o = cur(); return slidesAll([{ P: o.P, A: o.A, name: o.name, label: lbl1() }, { P: S.cmpP, A: S.cmpA, name: S.cmpName, label: lbl2() }], logo);
+    }
+    function exportRep(mode) {
+      var all = S.rsc === "all", list = fibList(); if (!all || list.length < 2) list = list.filter(function (x) { return x.idx === S.i; });
+      if (!list.length) return;
+      var m = document.getElementById("sv-rpm"); if (m) m.textContent = "Gerando relatório...";
+      var slug = String(cfg.title || "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, ""), base = list.length > 1 ? "relatorio_curvas_" + (slug ? slug + "_" : "") + list.length + "_curvas" : "relatorio_curvas_" + list[0].name.replace(/\.sor$/i, "");
+      loadLogo().then(function (lg) { exportCmp2(mode, lg, { list: list, base: base, msgId: "sv-rpm" }); });
     }
     function cmpText() {
       var D = cmpData(), t = "Comparação de curvas OTDR\n" + (cfg.title || "") + "\nATUAL: " + cur().name + "\nCOMPARADA: " + S.cmpName + "\n\nPos(km) | Perda atual | Perda comp. | Δ\n";
@@ -670,10 +694,10 @@
       var msg0 = document.getElementById("sv-shm"); if (msg0) msg0.textContent = "Gerando relatório...";
       loadLogo().then(function (lg) { exportCmp2(mode, lg); });
     }
-    function exportCmp2(mode, logo) {
-      var msg = document.getElementById("sv-shm"); function say(t) { if (msg) msg.textContent = t; }
-      var cvs; try { cvs = slidesCmp(logo); } catch (e) { say("Erro ao gerar slides: " + (e && e.message || e)); return; }
-      var base = "relatorio_curvas_" + cur().name.replace(/\.sor$/i, "") + "_x_" + S.cmpName.replace(/\.sor$/i, "");
+    function exportCmp2(mode, logo, spec) {
+      var msg = document.getElementById(spec ? spec.msgId : "sv-shm"); function say(t) { if (msg) msg.textContent = t; }
+      var cvs; try { cvs = spec ? slidesAll(spec.list, logo) : slidesCmp(logo); } catch (e) { say("Erro ao gerar slides: " + (e && e.message || e)); return; }
+      var base = spec ? spec.base : "relatorio_curvas_" + cur().name.replace(/\.sor$/i, "") + "_x_" + S.cmpName.replace(/\.sor$/i, "");
       function save(bl, nome) { var a = document.createElement("a"), u = URL.createObjectURL(bl); a.href = u; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); }
       if (mode === "share" || mode === "pdf") {
         var pdf; try { pdf = makePdf(cvs); } catch (e) { say("Erro ao gerar PDF: " + (e && e.message || e)); return; }
@@ -704,7 +728,7 @@
           z.generateAsync({ type: "blob" }).then(function (zb) { save(zb, base + "_slides.zip"); say(out.length + " slides 16:9 (1920×1080) em um ZIP."); });
         }
         if (mode === "share" && navigator.share && files.length && navigator.canShare && navigator.canShare({ files: files })) {
-          navigator.share({ files: files, title: "Relatório de curvas OTDR — TESTAR BARRAMENTO", text: cmpText() }).then(function () { say("Compartilhado."); }).catch(function (e) { if (e && e.name !== "AbortError") baixar(); });
+          navigator.share({ files: files, title: "Relatório de curvas OTDR — TESTAR BARRAMENTO", text: spec ? "Relatório de curvas OTDR — TESTAR BARRAMENTO" : cmpText() }).then(function () { say("Compartilhado."); }).catch(function (e) { if (e && e.name !== "AbortError") baixar(); });
         } else baixar();
       }
     }
@@ -840,6 +864,11 @@
           S.cmpP = pick.P; S.cmpA = analyze(pick.P, {}); S.cmpName = pick.name; S.cmpRes = compare(cur().P, pick.P); S.cmpMsg = "Comparando com " + pick.name + " (linha verde). Passe o mouse ou use os cursores A/B para ler as duas curvas no mesmo ponto."; render();
         }).catch(function (e) { S.cmpP = null; S.cmpRes = null; S.cmpMsg = "Erro ao carregar: " + (e && e.message || e); render(); });
       };
+      var rs = $("sv-rsc"); if (rs) rs.onchange = function () { S.rsc = rs.value; };
+      var r1 = $("sv-rsh"); if (r1) r1.onclick = function () { exportRep("share"); };
+      var r2 = $("sv-rpp"); if (r2) r2.onclick = function () { exportRep("pptx"); };
+      var r3 = $("sv-rpd"); if (r3) r3.onclick = function () { exportRep("pdf"); };
+      var r4 = $("sv-rpn"); if (r4) r4.onclick = function () { exportRep("png"); };
       var b1 = $("sv-shc"); if (b1) b1.onclick = function () { exportCmp("share"); };
       var b2 = $("sv-pngc"); if (b2) b2.onclick = function () { exportCmp("png"); }; var b4 = $("sv-pptc"); if (b4) b4.onclick = function () { exportCmp("pptx"); }; var b5 = $("sv-pdfc"); if (b5) b5.onclick = function () { exportCmp("pdf"); };
       var b3 = $("sv-csvc"); if (b3) b3.onclick = csvCmp;

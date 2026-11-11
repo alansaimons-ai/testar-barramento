@@ -26,3 +26,7 @@ Módulo `src/sor-analisador.js` (embutido no `index.html` entre `/*TBSOR-BEGIN*/
 - Ao registrar um teste, além do BA/JM há o campo opcional **Melhorias realizadas** (texto livre), exibido no histórico e pesquisável.
 - **ADMIN** (botão 🔐 ADMIN no topo): login pelo Supabase Auth. Admin pode excluir testes (com seus arquivos) e arquivos de curvas. Incluir testes/arquivos continua aberto a todos.
 - Configuração: rodar o bloco 5 do `supabase/schema.sql` e criar os usuários em *Authentication > Users* (e-mail/senha, *Auto Confirm*). A lista de admins fica na tabela `tb_admins`. Senhas nunca vão para o código.
+
+## Relatório de curvas (1 ou várias)
+
+No analisador (avulso ou dentro de um teste) o card **Relatório de curvas — padrão TESTAR BARRAMENTO** exporta o mesmo modelo 16:9 (PDF compartilhável, PowerPoint, PDF, PNG) para **uma curva** (página inteira) ou **todas as curvas carregadas** (de duas em duas, lado a lado). O comparativo continua com seus botões próprios.
