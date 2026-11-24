@@ -117,3 +117,11 @@ drop policy if exists curvas_select on storage.objects;
 drop policy if exists curvas_delete on storage.objects;
 create policy curvas_select on storage.objects for select to anon, authenticated using (bucket_id = 'curvas');
 create policy curvas_delete on storage.objects for delete to authenticated using (bucket_id = 'curvas' and public.tb_is_admin());
+
+-- =====================================================================
+-- 6) ADMIN — excluir linhas de trechos (a edição de trechos já é permitida pelas regras do bloco 3;
+--    a edição dos dados de testes registrados usa a regra de update do bloco 5)
+-- =====================================================================
+drop policy if exists tb_trechos_delete on public.tb_trechos;
+create policy tb_trechos_delete on public.tb_trechos for delete to authenticated using (public.tb_is_admin());
+grant delete on public.tb_trechos to authenticated;

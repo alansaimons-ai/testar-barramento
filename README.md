@@ -30,3 +30,11 @@ Módulo `src/sor-analisador.js` (embutido no `index.html` entre `/*TBSOR-BEGIN*/
 ## Relatório de curvas (1 ou várias)
 
 No analisador (avulso ou dentro de um teste) o card **Relatório de curvas — padrão TESTAR BARRAMENTO** exporta o mesmo modelo 16:9 (PDF compartilhável, PowerPoint, PDF, PNG) para **uma curva** (página inteira) ou **todas as curvas carregadas** (de duas em duas, lado a lado). O comparativo continua com seus botões próprios.
+
+## Visão anterior (antes × depois da atividade)
+
+No preenchimento do teste, o card **Informar visão anterior** abre os mesmos campos (Pout TX / Pin RX por equipamento) e a **data de referência** da medição anterior. As medidas preenchidas acima passam a ser o DEPOIS. O resultado traz o comparativo por equipamento, a variação e a conclusão de melhoria (pior caso antes → depois), e tudo é salvo em `dados.comp`, aparece no histórico e vai no compartilhamento (imagem, PowerPoint e texto).
+
+## Admin: corrigir trechos e testes
+
+Com o login ADMIN: **✏ Editar trecho** (distância, descrição, referência, equipamentos A/B, estações, inverter TX↔RX, incluir/excluir linhas) e **✏ Editar** em cada teste registrado (protocolo, melhorias e data de referência). Rode o bloco 6 do `supabase/schema.sql` para liberar a exclusão de linhas de trechos.
