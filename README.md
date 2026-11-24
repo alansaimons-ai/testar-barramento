@@ -46,3 +46,7 @@ Logos oficiais embutidos (`window.TBLOGO`, base64: versões positiva/negativa e 
 - Topo no mesmo estilo do statuscof: logo oficial V▪tal (Preferencial positivo/negativo), título discreto, faixa em gradiente amarelo→cinza, ações compactas com ícones e alternador de tema ☀/☾. No celular as ações viram uma barra de ícones abaixo do título.
 - Campos numéricos usam teclado decimal (`inputMode="decimal"`), aceitam vírgula (vira ponto) e, em telas de toque, mostram o botão **±** para trocar o sinal (teclados de celular que não têm "-").
 - `color-scheme` declarado e `text-size-adjust` travado para evitar distorção no Samsung Internet/modo escuro forçado.
+
+## Exportar testes do histórico
+Cada teste registrado (histórico do trecho e botão Histórico) tem **⇪ Exportar**: Compartilhar, Imagem 16:9 (PNG), PowerPoint (.pptx) e Copiar texto. O resumo segue o padrão "Resumo dos 2 sentidos" (Fibra 1/LR verde, Fibra 2/RL azul, medições por equipamento, conclusão, antes × depois, melhorias, Raman e atenuador), desenhado a partir de `tb_testes.dados`. Módulo `src/historico-export.js`, embutido no `index.html` entre `/*TBHX-BEGIN*/` e `/*TBHX-END*/`.
+O botão "Análise com Inteligência Artificial" foi removido.
