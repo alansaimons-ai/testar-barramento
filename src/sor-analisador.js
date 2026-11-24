@@ -474,7 +474,7 @@
     var MELH = 0.50, HI = 0.30;
     function melhoria(PP) { var ev = PP.events.filter(function (e) { return !e.fim_de_fibra && e.perda > MELH; }); return { soma: ev.reduce(function (a, e) { return a + e.perda; }, 0), n: ev.length }; }
     function slidesFibers(list, logo, pg) {
-      var W = 1920, H = 1080, M = 40, CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6", TEAL = "#00a99d", FN = "Inter,system-ui,sans-serif";
+      var W = 1920, H = 1080, M = 40, CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6", TEAL = "#FFD919", FN = "Inter,system-ui,sans-serif";
       var two = list.length > 1, P = list[0].P, A = list[0].A, na = list[0].name, l1 = list[0].label, C = two ? list[1].P : null, B = two ? list[1].A : null, nb = two ? list[1].name : "", l2 = two ? list[1].label : "", out = [], total = 0, x;
       var when = new Date().toLocaleString("pt-BR"), cw = two ? (W - 2 * M - 40) / 2 : W - 2 * M, TOP = 118, BOT = H - 50;
       function mk() { var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var c = cv.getContext("2d"); c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, H); c.textBaseline = "middle"; return { cv: cv, x: c }; }
@@ -482,17 +482,11 @@
       function fit(c, t, w) { t = String(t == null ? "" : t); if (c.measureText(t).width <= w) return t; while (t.length > 1 && c.measureText(t + "…").width > w) t = t.slice(0, -1); return t + "…"; }
       function wrap(t, w, font) { mx.font = font; var ws = String(t == null ? "" : t).split(/\s+/), ln = [], c = ""; ws.forEach(function (wd) { var tt = c ? c + " " + wd : wd; if (mx.measureText(tt).width > w && c) { ln.push(c); c = wd; } else c = tt; }); if (c) ln.push(c); return ln.length ? ln : [""]; }
       function rr(c, x0, y0, w, h, r) { c.beginPath(); c.moveTo(x0 + r, y0); c.arcTo(x0 + w, y0, x0 + w, y0 + h, r); c.arcTo(x0 + w, y0 + h, x0, y0 + h, r); c.arcTo(x0, y0 + h, x0, y0, r); c.arcTo(x0, y0, x0 + w, y0, r); c.closePath(); }
-      function emblem(c, x0, y0, sz) { /* marca da ferramenta: onda DWDM entre dois equipamentos */
-        rr(c, x0, y0, sz, sz, sz * 0.22); c.fillStyle = TEAL; c.fill();
-        c.strokeStyle = "#ffffff"; c.lineWidth = sz * 0.07; c.lineCap = "round"; c.beginPath();
-        for (var i = 0; i <= 40; i++) { var t = i / 40, px = x0 + sz * (0.2 + 0.6 * t), py = y0 + sz * (0.5 - 0.17 * Math.sin(t * Math.PI * 3)); i ? c.lineTo(px, py) : c.moveTo(px, py); } c.stroke();
-        c.fillStyle = "#ffffff"; [0.16, 0.84].forEach(function (f) { c.beginPath(); c.arc(x0 + sz * f, y0 + sz * 0.5, sz * 0.075, 0, 6.2832); c.fill(); });
-      }
       function head(c, idx) {
-        c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, 96); c.fillStyle = TEAL; c.fillRect(0, 96, W, 4);
+        c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, 96); c.fillStyle = TEAL; c.fillRect(0, 94, W, 6);
         var xx = M;
-        if (logo) { var lh = 40, lw = logo.width * lh / logo.height; try { c.drawImage(logo, xx, 28, lw, lh); xx += lw + 18; c.fillStyle = BD; c.fillRect(xx, 24, 2, 48); xx += 20; } catch (e) { } }
-        emblem(c, xx, 22, 52); xx += 68;
+        if (logo) { var lh = 34, lw = logo.width * lh / logo.height; try { c.drawImage(logo, xx, 31, lw, lh); xx += lw + 18; c.fillStyle = BD; c.fillRect(xx, 24, 2, 48); xx += 20; } catch (e) { } }
+        
         c.textAlign = "left"; c.fillStyle = TX; c.font = "800 28px " + FN; c.fillText("TESTAR BARRAMENTO", xx, 38);
         c.fillStyle = MT; c.font = "500 16px " + FN; c.fillText("Validação de Campo — Rede DWDM", xx, 66);
         c.textAlign = "right"; c.fillStyle = TX; c.font = "800 22px " + FN; c.fillText("RELATÓRIO DE CURVAS OTDR", W - M, 36);
@@ -566,14 +560,14 @@
         (pB[fp] || []).forEach(function (it) { it.d(M + cw + 40, it.y); });
         if (two) { x.strokeStyle = BD; x.lineWidth = 1; x.beginPath(); x.moveTo(W / 2, TOP); x.lineTo(W / 2, BOT); x.stroke(); }
         x.fillStyle = TEAL; x.fillRect(0, H - 34, W, 34);
-        x.fillStyle = "#ffffff"; x.font = "600 13px " + FN; x.textAlign = "left";
+        x.fillStyle = "#000000"; x.font = "600 13px " + FN; x.textAlign = "left";
         x.fillText("▲ amarelo: perda acima de 0,30 dB   ·   ▲ vermelho: perda acima de 0,50 dB (entra na MELHORIA)   ·   Análise de apoio — a interpretação final é do analista.", M, H - 17);
         x.textAlign = "right"; x.fillText("TESTAR BARRAMENTO · Validação de Campo — Rede DWDM", W - M, H - 17);
         out.push(sf.cv);
       }
       /* ---- página final: curvas ilustrativas com os piores eventos de cada fibra ---- */
       var sc = mk(); x = sc.x; head(x, off + nCol + 1);
-      function footer() { x.fillStyle = TEAL; x.fillRect(0, H - 34, W, 34); x.fillStyle = "#ffffff"; x.font = "600 13px " + FN; x.textAlign = "left"; x.fillText("Ilustração das curvas (nível relativo ao início de cada fibra). Marcados: os 3 piores eventos de cada fibra. Análise de apoio — a interpretação final é do analista.", M, H - 17); x.textAlign = "right"; x.fillText("TESTAR BARRAMENTO · Validação de Campo — Rede DWDM", W - M, H - 17); }
+      function footer() { x.fillStyle = TEAL; x.fillRect(0, H - 34, W, 34); x.fillStyle = "#000000"; x.font = "600 13px " + FN; x.textAlign = "left"; x.fillText("Ilustração das curvas (nível relativo ao início de cada fibra). Marcados: os 3 piores eventos de cada fibra. Análise de apoio — a interpretação final é do analista.", M, H - 17); x.textAlign = "right"; x.fillText("TESTAR BARRAMENTO · Validação de Campo — Rede DWDM", W - M, H - 17); }
       x.textAlign = "left"; x.fillStyle = TX; x.font = "800 22px " + FN; x.fillText("CURVAS — VISÃO ILUSTRATIVA", M, 136);
       [[CA, l1 + " · " + na]].concat(two ? [[CB, l2 + " · " + nb]] : []).forEach(function (lg, i) { var lx = M + 420 + i * 560; x.fillStyle = lg[0]; x.fillRect(lx, 132, 46, 6); x.fillStyle = TX; x.font = "700 16px " + FN; x.fillText(fit(x, lg[1], 480), lx + 58, 136); });
       function worst(PP) { return PP.events.map(function (e, k) { return { e: e, k: k }; }).filter(function (o) { return !o.e.fim_de_fibra && o.e.perda > 0; }).sort(function (a, b) { return b.e.perda - a.e.perda; }); }
@@ -688,8 +682,8 @@
       put(t + "trailer\n<< /Size " + nObj + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF");
       return new Blob(parts, { type: "application/pdf" });
     }
-    var LOGO_URL = "https://vtal.com/wp-content/uploads/2025/02/logo-vtal-footer.png", logoP = null;
-    function loadLogo() { if (logoP) return logoP; logoP = new Promise(function (ok) { var im = new Image(), done = false; im.crossOrigin = "anonymous"; im.onload = function () { if (done) return; done = true; try { var t = document.createElement("canvas"); t.width = 2; t.height = 2; var c = t.getContext("2d"); c.drawImage(im, 0, 0, 2, 2); t.toDataURL(); ok(im); } catch (e) { ok(null); } }; im.onerror = function () { if (!done) { done = true; ok(null); } }; setTimeout(function () { if (!done) { done = true; ok(null); } }, 2500); im.src = LOGO_URL; }); return logoP; }
+    var logoP = null;
+    function loadLogo() { if (logoP) return logoP; var src = window.TBLOGO && window.TBLOGO.posBig; logoP = new Promise(function (ok) { if (!src) return ok(null); var im = new Image(); im.onload = function () { ok(im); }; im.onerror = function () { ok(null); }; im.src = src; }); return logoP; }
     function exportCmp(mode) {
       var msg0 = document.getElementById("sv-shm"); if (msg0) msg0.textContent = "Gerando relatório...";
       loadLogo().then(function (lg) { exportCmp2(mode, lg); });

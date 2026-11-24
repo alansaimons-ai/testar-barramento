@@ -38,3 +38,6 @@ No preenchimento do teste, o card **Informar visão anterior** abre os mesmos ca
 ## Admin: corrigir trechos e testes
 
 Com o login ADMIN: **✏ Editar trecho** (distância, descrição, referência, equipamentos A/B, estações, inverter TX↔RX, incluir/excluir linhas) e **✏ Editar** em cada teste registrado (protocolo, melhorias e data de referência). Rode o bloco 6 do `supabase/schema.sql` para liberar a exclusão de linhas de trechos.
+
+## Identidade visual V.tal
+Logos oficiais embutidos (`window.TBLOGO`, base64: versões positiva/negativa e símbolo), favicon do símbolo, paleta do guia de marca (amarelo #FFD919, cinzas #2E2D39/#514F66, amarelo escuro #694A00 para texto sobre branco) em ambos os temas, relatório/PPT/imagem de compartilhamento com a marca. Ao corrigir os sentidos de um trecho como admin, os testes já registrados daquele trecho têm os nomes dos sentidos atualizados.
