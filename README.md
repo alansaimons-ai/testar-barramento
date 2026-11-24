@@ -41,3 +41,8 @@ Com o login ADMIN: **✏ Editar trecho** (distância, descrição, referência, 
 
 ## Identidade visual V.tal
 Logos oficiais embutidos (`window.TBLOGO`, base64: versões positiva/negativa e símbolo), favicon do símbolo, paleta do guia de marca (amarelo #FFD919, cinzas #2E2D39/#514F66, amarelo escuro #694A00 para texto sobre branco) em ambos os temas, relatório/PPT/imagem de compartilhamento com a marca. Ao corrigir os sentidos de um trecho como admin, os testes já registrados daquele trecho têm os nomes dos sentidos atualizados.
+
+## Topo clean e celular (padrão do Painel de Indicadores / statuscof)
+- Topo no mesmo estilo do statuscof: logo oficial V▪tal (Preferencial positivo/negativo), título discreto, faixa em gradiente amarelo→cinza, ações compactas com ícones e alternador de tema ☀/☾. No celular as ações viram uma barra de ícones abaixo do título.
+- Campos numéricos usam teclado decimal (`inputMode="decimal"`), aceitam vírgula (vira ponto) e, em telas de toque, mostram o botão **±** para trocar o sinal (teclados de celular que não têm "-").
+- `color-scheme` declarado e `text-size-adjust` travado para evitar distorção no Samsung Internet/modo escuro forçado.
