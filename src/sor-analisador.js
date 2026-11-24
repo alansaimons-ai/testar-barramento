@@ -405,7 +405,7 @@
       }
       /* gráfico */
       h += '<div class="sv-card"><div class="sv-lb">Curva (nível relativo ao início da fibra)</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><button class="sv-btn" id="sv-zi">＋ Zoom</button><button class="sv-btn" id="sv-zo">－ Zoom</button><button class="sv-btn" id="sv-zr">Fibra</button><button class="sv-btn" id="sv-zf">Tudo (com ruído)</button><button class="sv-btn" id="sv-ccl">Limpar cursores</button><button class="sv-btn" id="sv-png">⬇ PNG</button><button class="sv-btn" id="sv-csvt">⬇ Curva CSV</button></div>' +
-        "" + (S.cmpP ? '<div class="sv-ro" style="margin:0 0 8px"><span style="color:#2563eb"><b>━━</b> ' + esc(it.name) + '</span><span style="color:#16a34a"><b>━━</b> ' + esc(S.cmpName) + "</span></div>" : "") + '<div class="sv-cv"><canvas id="sv-cv"></canvas></div><div class="sv-ro" id="sv-ro"></div><div class="sv-note">Roda do mouse = zoom · arrastar = mover · clique = posiciona cursor A, depois B · duplo clique = voltar à fibra. Meça perda e atenuação entre A e B.</div></div>';
+        "" + (S.cmpP ? '<div class="sv-ro" style="margin:0 0 8px"><span style="color:#22A861"><b>━━</b> ' + esc(it.name) + '</span><span style="color:#3B82F6"><b>━━</b> ' + esc(S.cmpName) + "</span></div>" : "") + '<div class="sv-cv"><canvas id="sv-cv"></canvas></div><div class="sv-ro" id="sv-ro"></div><div class="sv-note">Roda do mouse = zoom · arrastar = mover · clique = posiciona cursor A, depois B · duplo clique = voltar à fibra. Meça perda e atenuação entre A e B.</div></div>';
       /* eventos */
       var bi = null;
       if (items.length > 1) { var o = items[S.i === 0 ? 1 : 0]; if (o.P.ok && !S.cmpP) bi = bidir(P, o.P); }
@@ -456,7 +456,7 @@
     function f2c(v, d) { return v == null ? "—" : v.toFixed(d); }
     function sg2(v, d) { return v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(d); }
     function cmpCard() {
-      var D = cmpData(), A = cur().A, na = cur().name, nb = S.cmpName, CA = "#2563eb", CB = "#16a34a";
+      var D = cmpData(), A = cur().A, na = cur().name, nb = S.cmpName, CA = "#22A861", CB = "#3B82F6";
       function side(c, col) { return c ? "<td style='border-left:2px solid " + col + "'>" + c.tipo + " " + c.n + "</td><td>" + c.pos.toFixed(3) + "</td><td" + (c.perda != null && c.perda > 0.30 ? " style='background:rgba(245,158,11,.18);color:#d97706;font-weight:800'" : "") + ">" + f2c(c.perda, 2) + (c.perda != null && c.perda > 0.30 ? " ▲" : "") + "</td><td>" + f2c(c.refl, 1) + "</td><td>" + f2c(c.att, 3) + "</td>" : "<td colspan='5' style='border-left:2px solid " + col + ";color:var(--mt);text-align:center'>— não encontrado nesta curva —</td>"; }
       var h = '<div class="sv-card"><div class="sv-lb">Tabela de eventos — lado a lado</div><div class="sv-tbw"><table class="sv-tb"><thead><tr><th style="border-bottom:3px solid ' + CA + ';color:' + CA + '" colspan="5">' + lbl1() + ' · ' + esc(na) + '</th><th style="border-bottom:3px solid ' + CB + ';color:' + CB + ';border-left:2px solid ' + CB + '" colspan="5">' + lbl2() + ' · ' + esc(nb) + '</th><th colspan="2" style="border-left:2px solid var(--bd)">DIFERENÇA</th></tr>' +
         '<tr><th style="border-left:2px solid ' + CA + '">Evento</th><th>Pos. (km)</th><th>Perda (dB)</th><th>Refl. (dB)</th><th>Atenuação (dB/km)</th><th style="border-left:2px solid ' + CB + '">Evento</th><th>Pos. (km)</th><th>Perda (dB)</th><th>Refl. (dB)</th><th>Atenuação (dB/km)</th><th style="border-left:2px solid var(--bd)">Δ perda (dB)</th><th>Δ pos. (m)</th></tr></thead><tbody>' +
@@ -474,7 +474,7 @@
     var MELH = 0.50, HI = 0.30;
     function melhoria(PP) { var ev = PP.events.filter(function (e) { return !e.fim_de_fibra && e.perda > MELH; }); return { soma: ev.reduce(function (a, e) { return a + e.perda; }, 0), n: ev.length }; }
     function slidesFibers(list, logo, pg) {
-      var W = 1920, H = 1080, M = 40, CA = "#0284c7", CB = "#7c3aed", TX = "#13202b", MT = "#566679", BD = "#d3dce6", TEAL = "#FFD919", FN = "Inter,system-ui,sans-serif";
+      var W = 1920, H = 1080, M = 40, CA = "#22A861", CB = "#3B82F6", TX = "#13202b", MT = "#566679", BD = "#d3dce6", TEAL = "#FFD919", FN = "Inter,system-ui,sans-serif";
       var two = list.length > 1, P = list[0].P, A = list[0].A, na = list[0].name, l1 = list[0].label, C = two ? list[1].P : null, B = two ? list[1].A : null, nb = two ? list[1].name : "", l2 = two ? list[1].label : "", out = [], total = 0, x;
       var when = new Date().toLocaleString("pt-BR"), cw = two ? (W - 2 * M - 40) / 2 : W - 2 * M, TOP = 118, BOT = H - 50;
       function mk() { var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var c = cv.getContext("2d"); c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, H); c.textBaseline = "middle"; return { cv: cv, x: c }; }
@@ -778,8 +778,8 @@
       ctx.save(); ctx.beginPath(); ctx.rect(g.l, g.t, g.w, g.h); ctx.clip();
       /* trechos com problema */
       A.secoes.forEach(function (s) { if (s.sev === "ok") return; ctx.fillStyle = COR[s.sev] + "22"; ctx.fillRect(cx(s.x0), g.t, cx(s.x1) - cx(s.x0), g.h); });
-      if (S.showCmp && S.cmpP) drawTrace(ctx, S.cmpP.trace, g, v.x0, v.x1, yr.y0, yr.y1, "#16a34a", 2.4);
-      drawTrace(ctx, P.trace, g, v.x0, v.x1, yr.y0, yr.y1, "#2563eb", 2.4);
+      if (S.showCmp && S.cmpP) drawTrace(ctx, S.cmpP.trace, g, v.x0, v.x1, yr.y0, yr.y1, "#3B82F6", 2.4);
+      drawTrace(ctx, P.trace, g, v.x0, v.x1, yr.y0, yr.y1, "#22A861", 2.4);
       /* eventos */
       ctx.font = "bold 10px Inter,system-ui,sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
       P.events.forEach(function (e, k) {
@@ -803,7 +803,7 @@
       function sg(v) { return (v > 0 ? "+" : "") + v.toFixed(2); }
       function pt(lbl, x, col) {
         var y1 = yAt(P, x), t = '<span' + (col ? ' style="color:' + col + '"' : "") + ">" + lbl + x.toFixed(3) + " km · " + (C ? "atual " : "") + y1.toFixed(2) + " dB";
-        if (C) { var y2 = yAt(C, x); t += ' · <span style="color:#16a34a">comparada ' + y2.toFixed(2) + " dB</span> · Δ " + sg(y1 - y2) + " dB"; }
+        if (C) { var y2 = yAt(C, x); t += ' · <span style="color:#3B82F6">comparada ' + y2.toFixed(2) + " dB</span> · Δ " + sg(y1 - y2) + " dB"; }
         return t + "</span>";
       }
       if (S.hover != null) h += pt("Cursor: ", S.hover);
@@ -812,7 +812,7 @@
       if (S.ca != null && S.cb != null) {
         var d = Math.abs(S.cb - S.ca), sgn = S.cb < S.ca ? -1 : 1, L = sgn * (yAt(P, S.ca) - yAt(P, S.cb));
         h += "<span><b>A↔B: " + d.toFixed(3) + " km · perda " + (C ? "atual " : "") + L.toFixed(2) + " dB" + (d > 0 ? " · " + (L / d).toFixed(3) + " dB/km" : "") + "</b></span>";
-        if (C) { var L2 = sgn * (yAt(C, S.ca) - yAt(C, S.cb)); h += '<span style="color:#16a34a"><b>comparada ' + L2.toFixed(2) + " dB" + (d > 0 ? " · " + (L2 / d).toFixed(3) + " dB/km" : "") + "</b></span><span><b>Δ perda (atual − comparada): " + sg(L - L2) + " dB" + (d > 0 ? " · " + sg((L - L2) / d) + " dB/km" : "") + "</b></span>"; }
+        if (C) { var L2 = sgn * (yAt(C, S.ca) - yAt(C, S.cb)); h += '<span style="color:#3B82F6"><b>comparada ' + L2.toFixed(2) + " dB" + (d > 0 ? " · " + (L2 / d).toFixed(3) + " dB/km" : "") + "</b></span><span><b>Δ perda (atual − comparada): " + sg(L - L2) + " dB" + (d > 0 ? " · " + sg((L - L2) / d) + " dB/km" : "") + "</b></span>"; }
       }
       ro.innerHTML = h;
     }
